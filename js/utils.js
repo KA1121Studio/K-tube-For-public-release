@@ -1,13 +1,12 @@
 // js/utils.js
-// 共通ユーティリティ関数
+// 共通ユーティリティ関数（元のコードからほぼそのまま抽出）
 
 const PIPED_API_BASE = '/piped';
+const MAX_RESULTS = 12;
 
-function el(id) {
-    return document.getElementById(id);
-}
+const el = id => document.getElementById(id);
 
-// 数値フォーマット（1,234,567形式）
+// 数値フォーマット
 function fmtNum(n) {
     if (n == null || isNaN(n)) return '0';
     return Number(n).toLocaleString('en-US');
@@ -39,7 +38,7 @@ function escapeHtml(s = '') {
         .replaceAll("'", '&#39;');
 }
 
-// Piped API フェッチ（サーバープロキシ経由）
+// Piped API フェッチ
 async function pipedFetch(endpoint, params = {}) {
     let path = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
     const queryString = new URLSearchParams(params).toString();
@@ -56,8 +55,8 @@ async function pipedFetch(endpoint, params = {}) {
     return response.json();
 }
 
-// チャンネルサムネイル取得（キャッシュ付き）
-const channelThumbCache = {};
+// チャンネルサムネイル（キャッシュ付き）
+let channelThumbCache = {};
 
 async function getChannelThumbPiped(channelId) {
     if (channelThumbCache[channelId]) return channelThumbCache[channelId];
@@ -68,12 +67,12 @@ async function getChannelThumbPiped(channelId) {
         channelThumbCache[channelId] = thumb;
         return thumb;
     } catch (e) {
-        console.warn('Channel thumb fetch failed:', e);
+        console.warn('channel thumb failed', e);
         return '';
     }
 }
 
-// 動画カード生成（共通）
+// 動画カード作成（元のコードに忠実）
 async function makeVideoCard(item) {
     const vid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
     const title = item.title || '';
@@ -89,7 +88,7 @@ async function makeVideoCard(item) {
     div.className = 'card';
     div.innerHTML = `
         <div class="thumb" data-vid="${vid}">
-            <img src="${th}" alt="${escapeHtml(title)}" loading="lazy">
+            <img src="${th}" alt="">
         </div>
         <div class="meta">
             <div class="channel-thumb"><img src="${channelThumb}" alt=""></div>
@@ -103,25 +102,20 @@ async function makeVideoCard(item) {
         </div>
     `;
 
-    // 動画クリック
     div.querySelector('.thumb').addEventListener('click', () => {
         location.hash = `watch=${vid}`;
     });
 
-    // チャンネルリンククリック
-    const chLink = div.querySelector('.ch-link');
-    if (chLink) {
-        chLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            location.hash = `channel=${chId}`;
-        });
-    }
+    div.querySelector('.ch-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        location.hash = `channel=${chId}`;
+    });
 
     return div;
 }
 
-// グローバルに公開（他のJSファイルから使用するため）
+// グローバル公開
 window.utils = {
     el,
     fmtNum,
