@@ -1,58 +1,55 @@
 <!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>ホーム</title>
-    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/1/19/Google_Classroom_Logo.svg">
-    
-    <link rel="stylesheet" href="css/style.css">
-    
-    <link rel="preconnect" href="https://teaching-materials-r4zf.onrender.com">
-    <link rel="dns-prefetch" href="https://teaching-materials-r4zf.onrender.com">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ホーム</title>
+<link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/1/19/Google_Classroom_Logo.svg">
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/style.css">
+
+<!-- Preconnect -->
+<link rel="preconnect" href="https://teaching-materials-r4zf.onrender.com">
+<link rel="dns-prefetch" href="https://teaching-materials-r4zf.onrender.com">
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="menu-btn" id="menuBtn" title="メニュー">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
-            </svg>
-        </div>
-        <div class="logo" id="homeBtn" title="Home">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNQTXmpmU6QHLKCluDXWal6WsGgBTFTNIrgw&s" 
-                 alt="logo" style="height:26px; border-radius:5px;">
-        </div>
-        <div class="search">
-            <input id="searchInput" placeholder="検索" autocomplete="off" />
-        </div>
-        <div class="actions">
-            <div title="アカウント" style="width:36px;height:36px;border-radius:50%;background:#eee"></div>
-        </div>
-    </header>
 
-    <!-- スライドサイドメニュー（モバイル用） -->
-    <div class="sidebar" id="sidebar"></div>
+<header>
+  <!-- メニュー（hamburger）ボタン -->
+  <div class="menu-btn" id="menuBtn" title="メニュー">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+      <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+    </svg>
+  </div>
+  <!-- ロゴ -->
+  <div class="logo" id="homeBtn" title="Home">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNQTXmpmU6QHLKCluDXWal6WsGgBTFTNIrgw&s" alt="logo" style="height:26px; border-radius:5px;">
+  </div>
+  <!-- 検索バー -->
+  <div class="search">
+    <input id="searchInput" placeholder="検索" autocomplete="off" />
+  </div>
+  <!-- 右端アクション -->
+  <div class="actions">
+    <div title="アカウント" style="width:36px;height:36px;border-radius:50%;background:#eee"></div>
+  </div>
+</header>
 
-    <!-- オーバーレイ -->
-    <div class="overlay" id="overlay"></div>
+<!-- サイドメニュー（スライド） -->
+<div class="sidebar" id="sidebar"> ...（元のsidebarの内容はすべてそのまま）... </div>
+<div class="overlay" id="overlay"></div>
 
-    <!-- 固定左サイドバー -->
-    <div class="sidebar-fixed" id="sidebarFixed"></div>
+<!-- 固定左サイドバー -->
+<div class="sidebar-fixed" id="sidebarFixed"> ...（元のsidebar-fixedの内容はすべてそのまま）... </div>
 
-    <!-- メインコンテンツ -->
-    <main class="content-main">
-        <div class="content" id="app"></div>
-    </main>
+<!-- メインコンテンツ -->
+<main class="content-main">
+  <div class="content" id="app"></div>
+</main>
 
-    <!-- JavaScript -->
-    <script src="js/utils.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/home.js"></script>
-    <script src="js/watch.js"></script>
-    <script src="js/games.js"></script>
-    <script src="js/settings.js"></script>
-    <script src="js/history.js"></script>
+<!-- JavaScript -->
+<script src="js/main.js"></script>
+
 </body>
 </html>
