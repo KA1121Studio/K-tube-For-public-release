@@ -1,6 +1,6 @@
-* {
-    box-sizing: border-box;
-}
+/* css/style.css */
+
+* { box-sizing: border-box; }
 
 html, body {
     height: 100%;
@@ -10,22 +10,13 @@ html, body {
     color: #111;
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
-}
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
 
-img {
-    max-width: 100%;
-    display: block;
-}
-
-/* Header */
+/* ====================== Header ====================== */
 header {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     z-index: 1000;
     background: #fff;
     border-bottom: 1px solid #eee;
@@ -37,25 +28,13 @@ header {
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
-body {
-    padding-top: 64px;
-}
+body { padding-top: 64px; }
 
 /* Logo */
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-}
+.logo { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
 /* Search */
-.search {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-}
-
+.search { flex: 1; display: flex; justify-content: center; }
 .search input {
     width: 100%;
     max-width: 720px;
@@ -66,13 +45,9 @@ body {
 }
 
 /* Actions */
-.actions {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
+.actions { display: flex; gap: 12px; align-items: center; }
 
-/* Main */
+/* ====================== Main Content ====================== */
 main.content-main {
     margin-left: 72px;
     width: calc(100% - 72px);
@@ -88,9 +63,7 @@ main.content-main {
     gap: 16px;
 }
 
-.card {
-    cursor: pointer;
-}
+.card { cursor: pointer; }
 
 .thumb {
     position: relative;
@@ -99,43 +72,23 @@ main.content-main {
     background: #eee;
 }
 
-.thumb img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
+.thumb img { width: 100%; height: auto; display: block; }
 
-.meta {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-}
+.meta { display: flex; gap: 12px; margin-top: 8px; }
 
 .channel-thumb {
-    width: 36px;
-    height: 36px;
+    width: 36px; height: 36px;
     border-radius: 50%;
     flex: 0 0 36px;
     background: #ddd;
     overflow: hidden;
 }
 
-.meta .info {
-    flex: 1;
-}
+.meta .info { flex: 1; }
+.meta .info .title { font-weight: 600; line-height: 1.2; margin-bottom: 6px; }
+.meta .info .sub { color: #606060; font-size: 13px; }
 
-.meta .info .title {
-    font-weight: 600;
-    line-height: 1.2;
-    margin-bottom: 6px;
-}
-
-.meta .info .sub {
-    color: #606060;
-    font-size: 13px;
-}
-
-/* Watch Page */
+/* ====================== Watch Page ====================== */
 .watch-container {
     display: flex;
     gap: 20px;
@@ -166,10 +119,7 @@ main.content-main {
     overflow: hidden;
 }
 
-.player-meta h1 {
-    font-size: 18px;
-    margin: 0 0 8px 0;
-}
+.player-meta h1 { font-size: 18px; margin: 0 0 8px 0; }
 
 .stats {
     color: #606060;
@@ -191,8 +141,7 @@ main.content-main {
 }
 
 .channel-row img {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     border-radius: 50%;
     overflow: hidden;
 }
@@ -226,26 +175,15 @@ main.content-main {
 }
 
 .comment img {
-    width: 36px;
-    height: 36px;
+    width: 36px; height: 36px;
     border-radius: 50%;
 }
 
-.comment .c-body {
-    flex: 1;
-}
+.comment .c-body { flex: 1; }
+.comment .c-body .name { font-weight: 700; font-size: 13px; }
+.comment .c-body .text { color: #333; margin-top: 6px; }
 
-.comment .c-body .name {
-    font-weight: 700;
-    font-size: 13px;
-}
-
-.comment .c-body .text {
-    color: #333;
-    margin-top: 6px;
-}
-
-/* Related */
+/* Related Videos */
 .related-item {
     display: flex;
     gap: 12px;
@@ -261,11 +199,10 @@ main.content-main {
     border-radius: 6px;
 }
 
-/* Sidebar */
+/* ====================== Sidebars ====================== */
 .sidebar {
     position: fixed;
-    top: 0;
-    left: -280px;
+    top: 0; left: -280px;
     width: 280px;
     height: 100%;
     background: white;
@@ -275,9 +212,7 @@ main.content-main {
     overflow-y: auto;
 }
 
-.sidebar.open {
-    left: 0;
-}
+.sidebar.open { left: 0; }
 
 .overlay {
     position: fixed;
@@ -304,9 +239,7 @@ main.content-main {
     cursor: pointer;
 }
 
-.menu-item:hover {
-    background: #f2f2f2;
-}
+.menu-item:hover { background: #f2f2f2; }
 
 /* Fixed Left Sidebar */
 .sidebar-fixed {
@@ -322,9 +255,7 @@ main.content-main {
     transition: width 0.3s ease;
 }
 
-.sidebar-fixed:hover {
-    width: 240px;
-}
+.sidebar-fixed:hover { width: 240px; }
 
 .sidebar-item {
     display: flex;
@@ -341,16 +272,13 @@ main.content-main {
     color: #0f0f0f;
 }
 
-.sidebar-item:hover {
-    background: #f2f2f2;
-}
-
+.sidebar-item:hover { background: #f2f2f2; }
 .sidebar-item.active {
     background: #fee2e2;
     color: #cc0000;
 }
 
-/* Dark Mode */
+/* ====================== Dark Mode ====================== */
 body.dark-mode {
     background: #0f0f0f;
     color: #e0e0e0;
@@ -371,24 +299,15 @@ body.dark-mode .sidebar-item:hover {
     background: #333;
 }
 
-/* Media Queries */
+/* ====================== Media Queries ====================== */
 @media (max-width: 900px) {
     main.content-main {
         margin-left: 0 !important;
         width: 100% !important;
     }
-    
-    .sidebar-fixed {
-        display: none;
-    }
-    
-    .watch-container {
-        flex-direction: column;
-    }
-    
-    .main-col, .side-col {
-        flex: 1 1 100%;
-    }
+    .sidebar-fixed { display: none; }
+    .watch-container { flex-direction: column; }
+    .main-col, .side-col { flex: 1 1 100%; }
 }
 
 /* Game & Tool Fullscreen */
@@ -410,9 +329,7 @@ body.dark-mode .sidebar-item:hover {
 }
 
 @media (max-width: 900px) {
-    .play-fullscreen {
-        left: 0;
-    }
+    .play-fullscreen { left: 0; }
 }
 
 /* Settings */
@@ -449,6 +366,4 @@ body.dark-mode .sidebar-item:hover {
     margin-top: 12px;
 }
 
-.danger-btn:hover {
-    background: #c82333;
-}
+.danger-btn:hover { background: #c82333; }
