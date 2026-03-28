@@ -1,129 +1,104 @@
 // js/app.js
-// メインアプリケーション（ルーティング・初期化）
+// メインルーティングとアプリ初期化（元の renderByHash を中心に再構成）
 
 let observerMap = new Map();
 let commentsPageToken = {};
 
-// 現在のページをレンダリングするメイン関数
+// ハッシュに基づいてページをレンダリングするメイン関数
 function renderByHash() {
-    const hash = location.hash.slice(1);
+    const h = location.hash.slice(1);
     
     // watchページ用のクラスをリセット
     document.body.classList.remove('watch-page');
 
-    if (!hash) {
+    if (!h) {
         renderHome();
     } else {
-        const [key, value] = hash.split('=');
-        
-        switch (key) {
-            case 'watch':
-                renderWatch(value);
-                document.body.classList.add('watch-page');
-                break;
-                
-            case 'channel':
-                renderChannel(value);
-                break;
-                
-            case 'search':
-                const query = decodeURIComponent(value || '');
-                document.getElementById('searchInput').value = query;
-                performSearch(query);
-                break;
-                
-            case 'games':
-                renderGames();
-                break;
-                
-            case 'tools':
-                renderTools();
-                break;
-                
-            case 'history':
-                renderHistory();
-                break;
-                
-            case 'settings':
-                renderSettings();
-                break;
-                
-            case 'about':
-                renderAbout();
-                break;
-                
-            case 'contact':
-                renderContact();
-                break;
-                
-            case 'playgame':
-                const gameUrl = decodeURIComponent(value || '');
-                renderGamePlay({ embedUrl: gameUrl, title: "ゲームプレイ中" });
-                break;
-                
-            case 'playtool':
-                const toolUrl = decodeURIComponent(value || '');
-                renderToolPlay({ embedUrl: toolUrl, title: "ツール実行中" });
-                break;
-                
-            default:
-                renderHome();
+        const [k, v] = h.split('=');
+
+        if (k === 'watch') {
+            renderWatch(v);
+            document.body.classList.add('watch-page');
+        } 
+        else if (k === 'channel') {
+            renderChannel(v);
+        } 
+        else if (k === 'search') {
+            const query = decodeURIComponent(v || '');
+            document.getElementById('searchInput').value = query;
+            performSearch(query);
+        } 
+        else if (k === 'games') {
+            renderGames();
+        } 
+        else if (k === 'tools') {
+            renderTools();
+        } 
+        else if (k === 'history') {
+            renderHistory();
+        } 
+        else if (k === 'settings') {
+            renderSettings();
+        } 
+        else if (k === 'about') {
+            renderAbout();
+        } 
+        else if (k === 'contact') {
+            renderContact();
+        } 
+        else if (k === 'playgame') {
+            const url = decodeURIComponent(v || '');
+            const fakeGame = { embedUrl: url, title: "ゲームプレイ中" };
+            renderGamePlay(fakeGame);
+        } 
+        else if (k === 'playtool') {
+            const url = decodeURIComponent(v || '');
+            const fakeTool = { embedUrl: url, title: "ツール実行中" };
+            renderToolPlay(fakeTool);
+        } 
+        else {
+            renderHome();
         }
     }
 
     updateSidebarActive();
 }
 
-// ページ読み込み時の初期化
+// アプリの初期化
 function initApp() {
-    // ダークモードの復元
-    const isDark = localStorage.getItem('darkMode') === 'true';
-    document.body.classList.toggle('dark-mode', isDark);
+    // ダークモード復元
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    document.body.classList.toggle('dark-mode', darkMode);
 
-    // ハッシュ変更を監視
-    window.addEventListener('hashchange', renderByHash);
-
-    // 検索バーのEnterキー対応
+    // イベント設定
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const q = searchInput.value.trim();
-                if (q) {
-                    location.hash = `search=${encodeURIComponent(q)}`;
-                } else {
-                    location.hash = '';
-                }
+                performSearch(searchInput.value.trim());
             }
         });
     }
 
-    // ホームボタン
     const homeBtn = document.getElementById('homeBtn');
     if (homeBtn) {
-        homeBtn.addEventListener('click', () => {
-            location.hash = '';
-        });
+        homeBtn.addEventListener('click', () => location.hash = '');
     }
 
-    // 初回レンダリング
+    // 初回実行
     renderByHash();
 }
 
-// ページロード完了時に実行
+// ページロード時に初期化
 window.addEventListener('load', () => {
     initApp();
-    
-    // ページオープン時にアクセス数を+1（統計用）
+
+    // ページオープン時にアクセス数 +1
     fetch('/fake-views?times=1')
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-            if (data) console.log('アクセス数 +1 完了', data);
-        })
         .catch(() => {});
 });
 
-// 他のファイルで使用できるようにグローバル公開
+// グローバル公開
 window.app = {
     renderByHash,
     initApp,
