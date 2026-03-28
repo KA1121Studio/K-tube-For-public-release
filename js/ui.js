@@ -1,17 +1,15 @@
 // js/ui.js
-// UI関連：メニュー、サイドバー、オーバーレイの制御
+// UI制御：メニュー、サイドバー、オーバーレイ（元のコードに忠実）
 
 // メニュー開閉
 function toggleMenu() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
-    if (sidebar && overlay) {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('open');
-    }
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
 }
 
-// サイドバーのアクティブ状態を更新
+// サイドバーのアクティブ状態更新
 function updateSidebarActive() {
     const hash = location.hash.slice(1);
     const items = document.querySelectorAll('.sidebar-item, .menu-item');
@@ -22,23 +20,19 @@ function updateSidebarActive() {
 
         if (!hash && target === 'home') {
             item.classList.add('active');
-        } 
-        else if (hash === 'games' && target === 'games') {
+        } else if (hash === 'games' && target === 'games') {
             item.classList.add('active');
-        } 
-        else if (hash === 'tools' && target === 'tools') {
+        } else if (hash === 'tools' && target === 'tools') {
             item.classList.add('active');
-        } 
-        else if (hash === 'history' && target === 'history') {
+        } else if (hash === 'history' && target === 'history') {
             item.classList.add('active');
-        } 
-        else if (hash === 'settings' && target === 'settings') {
+        } else if (hash === 'settings' && target === 'settings') {
             item.classList.add('active');
         }
     });
 }
 
-// サイドメニュー（スライドメニュー）と固定サイドバーのHTMLを動的に生成
+// サイドメニュー（スライド式）と固定サイドバーを動的に生成
 function initSidebars() {
     // スライドメニュー（モバイル用）
     const sidebar = document.getElementById('sidebar');
@@ -100,30 +94,20 @@ function initSidebars() {
 
 // メニュー項目にクリックイベントを付与
 function attachMenuListeners() {
-    const items = document.querySelectorAll('.sidebar-item, .menu-item');
-    
-    items.forEach(item => {
+    document.querySelectorAll('.sidebar-item, .menu-item').forEach(item => {
         item.addEventListener('click', () => {
             const target = item.dataset.target;
-            
-            // アクティブ状態を切り替え
+
             document.querySelectorAll('.sidebar-item, .menu-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
 
-            // ページ遷移
-            if (target === 'home') {
-                location.hash = '';
-            } else if (target === 'games') {
-                location.hash = 'games';
-            } else if (target === 'tools') {
-                location.hash = 'tools';
-            } else if (target === 'history') {
-                location.hash = 'history';
-            } else if (target === 'settings') {
-                location.hash = 'settings';
-            }
+            if (target === 'home') location.hash = '';
+            else if (target === 'games') location.hash = 'games';
+            else if (target === 'tools') location.hash = 'tools';
+            else if (target === 'history') location.hash = 'history';
+            else if (target === 'settings') location.hash = 'settings';
 
-            // モバイルのスライドメニューを閉じる
+            // モバイルメニューを閉じる
             const sidebar = document.getElementById('sidebar');
             if (sidebar && sidebar.classList.contains('open')) {
                 toggleMenu();
@@ -132,20 +116,16 @@ function attachMenuListeners() {
     });
 }
 
-// ハンバーガーメニューとオーバーレイのイベント設定
+// ハンバーガーメニューとオーバーレイのイベント
 function initMenuEvents() {
     const menuBtn = document.getElementById('menuBtn');
     const overlay = document.getElementById('overlay');
 
-    if (menuBtn) {
-        menuBtn.addEventListener('click', toggleMenu);
-    }
-    if (overlay) {
-        overlay.addEventListener('click', toggleMenu);
-    }
+    if (menuBtn) menuBtn.addEventListener('click', toggleMenu);
+    if (overlay) overlay.addEventListener('click', toggleMenu);
 }
 
-// UI全体の初期化
+// UI全体初期化
 function initUI() {
     initSidebars();
     initMenuEvents();
