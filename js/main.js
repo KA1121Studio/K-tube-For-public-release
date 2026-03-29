@@ -1108,7 +1108,6 @@ function renderByHash() {
 }
 
 
-// 新しい関数：ゲーム一覧画面を表示
 function renderGames() {
   app.innerHTML = `
     <section id="gamesSection">
@@ -1116,146 +1115,11 @@ function renderGames() {
         ゲーム
       </div>
       <div class="video-grid" id="gameGrid"></div>
-      <div id="gamesSentinel" style="height:32px"></div>
     </section>
   `;
-
   loadGames();
 }
 
-// ゲームデータを読み込んでカードを表示（仮データ）
-async function loadGames() {
-  const grid = document.getElementById('gameGrid');
-  if (!grid) return;
-
-  // 仮のゲームデータ（後で本物に置き換え）
-const fakeGames = [
-  {
-    title: "Vex 6",
-    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRWlLToXUhgx8YiT35WkYM_qXG4x7mRqRuIAA&s",
-    embedUrl: "https://vex6-1.onrender.com/",
-    description: "棒人間のアスレチックゲーム"
-  },
-  {
-    title: "Minecraft",
-    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSasnIEKy9EZiX4tmC56-EKt8hQuJXW5zybqA&s",
-    embedUrl: "https://eaglercraft-java-1-20-1-jw-1.onrender.com/",
-    description: "ブロックで、自分の世界を広げよう"
-  },
-  {
-    title: "2048",
-    thumbnail: "https://i.ytimg.com/vi/4NFZwPhqeRs/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAW5Gr47WItX8gD0QmCCqeJ4b0w4g",
-    embedUrl: "https://rgukt-sklm-abccf.firebaseapp.com/taxa/games/2048-master/index.html",
-    description: "数字を合体させるゲーム"
-  },
-  {
-    title: "Snowball.io",
-    thumbnail: "https://i.ytimg.com/vi/CAJw0bouacU/maxresdefault.jpg",
-    embedUrl: "https://snowball-io.netlify.app/",
-    description: "巨大な雪玉を作って相手を落とそう！"
-  },
-  {
-    title: "Slope Rider 3D",
-    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7kQ3jZMC5Son5dqxGw9WhWcRUuiOL8kunLA&s",
-    embedUrl: "https://moonlight.sparks.ddns-ip.net/math/hvtrs8%2F-snorepifep.mre%2Fqlmpg-pifep-1d",
-    description: "スキーで障害物を避けながら進むゲーム"
-  },
-  {
-    title: "GTA",
-    thumbnail: "https://store-images.s-microsoft.com/image/apps.3117.14492969036550054.5a1d40f5-fe0d-427a-bd14-9a9ed15a423c.f601beb2-973f-47de-ad1a-ccec296ee4d1?q=90&w=480&h=270",
-    embedUrl: "https://moonlight.sparks.ddns-ip.net/math/hvtrs8%2F-dcsjmgtpy%2Ccmm-gva%2Fgpald%2Fvggcs%2Fcpioe",
-    description: "街で自由に暴れれるゲーム"
-  },
-  {
-    title: "ギョ〜転！ガッポリすし",
-    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYM-InT7eFQT9coj75pNJda-Zy_VveJBPcSA&s",
-    embedUrl: "https://melodic-crisp-d02b45.netlify.app/",
-    description: "寿司にコインを賭けてふやすゲーム"
-  },
-  {
-    title: "Deer Adventure",
-    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGV9py3fi0aOMlaFecyh2a0iFKJBlAyP7YWQ&s",
-    description: "鹿になって街を暴れるゲーム"
-  }
-];
-
-  fakeGames.forEach(game => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="thumb" data-game="${game.embedUrl}">
-        <img src="${game.thumbnail}" alt="${game.title}" style="aspect-ratio:16/9; object-fit:cover;">
-      </div>
-      <div class="meta">
-        <div class="info">
-          <div class="title">${escapeHtml(game.title)}</div>
-          <div class="sub">${escapeHtml(game.description || '')}</div>
-        </div>
-      </div>
-    `;
-
-    // クリックでゲーム再生画面へ
-    card.querySelector('.thumb').addEventListener('click', () => {
-      location.hash = `playgame=${encodeURIComponent(game.embedUrl)}`;
-      renderGamePlay(game);
-    });
-
-    grid.appendChild(card);
-  });
-}
-
-// 新しい関数：ゲームプレイ画面（iframe埋め込み）
-function renderGamePlay(game) {
-  app.innerHTML = `
-    <div class="play-fullscreen">
-      <iframe 
-        src="${game.embedUrl}" 
-        frameborder="0" 
-        allowfullscreen
-      ></iframe>
-    </div>
-  `;
-}
-
-// hash変更時にゲームプレイも対応
-function renderByHash() {
-  const h = location.hash.slice(1);
-  document.body.classList.remove('watch-page'); // 既存のwatch用
-
-  if (!h) {
-    renderHome();
-  } else {
-    const [k, v] = h.split('=');
-    if (k === 'watch') {
-      renderWatch(v);
-      document.body.classList.add('watch-page');
-    } else if (k === 'channel') {
-      renderChannel(v);
-    } else if (k === 'search') {
-      searchInput.value = decodeURIComponent(v || '');
-      performSearch(decodeURIComponent(v || ''));
-    } else if (k === 'games') {
-      renderGames();
-    } else if (k === 'playgame') {
-      // 仮データから探す（本番ではAPIやDBから取得）
-      const url = decodeURIComponent(v || '');
-      const fakeGame = { 
-        title: "ゲームプレイ中", 
-        embedUrl: url, 
-        thumbnail: "", 
-        description: "埋め込みゲーム" 
-      };
-      renderGamePlay(fakeGame);
-    } else {
-      renderHome();
-    }
-  }
-
-  // アクティブ更新（既存の関数呼び出し）
-  updateSidebarActive();
-}
-
- // 新しい関数：ツール一覧画面を表示
 function renderTools() {
   app.innerHTML = `
     <section id="toolsSection">
@@ -1263,83 +1127,9 @@ function renderTools() {
         ツール
       </div>
       <div class="video-grid" id="toolGrid"></div>
-      <div id="toolsSentinel" style="height:32px"></div>
     </section>
   `;
-
   loadTools();
-}
-
-// ツールデータを読み込んでカードを表示（仮データ）
-async function loadTools() {
-  const grid = document.getElementById('toolGrid');
-  if (!grid) return;
-
-  // 仮のツールデータ（後で本物に置き換え）
-  const fakeTools = [
-    {
-      title: "QRコード作成",
-      thumbnail: "https://img.icons8.com/color/480/qr-code.png",
-      embedUrl: "https://www.the-qrcode-generator.com/",
-      description: "URLやテキストからQRコードをすぐ作れる"
-    },
-    {
-      title: "単位変換ツール",
-      thumbnail: "https://img.icons8.com/color/480/calculator.png",
-      embedUrl: "https://www.unitconverters.net/",
-      description: "長さ・重さ・温度などあらゆる単位を変換"
-    },
-    {
-      title: "ストップウォッチ",
-      thumbnail: "https://img.icons8.com/color/480/stopwatch.png",
-      embedUrl: "https://www.online-stopwatch.com/",
-      description: "シンプルで使いやすいタイマー＆ストップウォッチ"
-    },
-    {
-      title: "パスワード生成器",
-      thumbnail: "https://img.icons8.com/color/480/password.png",
-      embedUrl: "https://passwordsgenerator.net/",
-      description: "強力なランダムパスワードを即生成"
-    },
-    // ここに追加可能
-  ];
-
-  fakeTools.forEach(tool => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="thumb" data-tool="${tool.embedUrl}">
-        <img src="${tool.thumbnail}" alt="${tool.title}" style="aspect-ratio:16/9; object-fit:cover;">
-      </div>
-      <div class="meta">
-        <div class="info">
-          <div class="title">${escapeHtml(tool.title)}</div>
-          <div class="sub">${escapeHtml(tool.description || '')}</div>
-        </div>
-      </div>
-    `;
-
-    // クリックでツール実行画面へ
-    card.querySelector('.thumb').addEventListener('click', () => {
-      location.hash = `playtool=${encodeURIComponent(tool.embedUrl)}`;
-      renderToolPlay(tool);
-    });
-
-    grid.appendChild(card);
-  });
-}
-
-// 新しい関数：ツール実行画面（iframe埋め込み）
-function renderToolPlay(tool) {
-  app.innerHTML = `
-    <div class="play-fullscreen">
-      <iframe 
-        src="${tool.embedUrl}" 
-        frameborder="0" 
-        allowfullscreen
-      ></iframe>
-    </div>
-  `;
 }
 
  // ────────────────────────────────────────────────
@@ -1438,15 +1228,15 @@ function renderByHash() {
       renderAbout();
     } else if (k === 'contact') {
       renderContact();
-    } else if (k === 'playgame') {
-      const url = decodeURIComponent(v || '');
-      const fakeGame = { title: "ゲームプレイ中", embedUrl: url, description: "埋め込みゲーム" };
-      renderGamePlay(fakeGame);
-    } else if (k === 'playtool') {
-      const url = decodeURIComponent(v || '');
-      const fakeTool = { title: "ツール実行中", embedUrl: url, description: "埋め込みツール" };
-      renderToolPlay(fakeTool);
-    } else {
+} else if (k === 'playgame') {
+  const url = decodeURIComponent(v || '');
+  const game = { embedUrl: url, title: "ゲーム" }; // 最低限の情報
+  renderGamePlay(game);
+} else if (k === 'playtool') {
+  const url = decodeURIComponent(v || '');
+  const tool = { embedUrl: url, title: "ツール" };
+  renderToolPlay(tool);
+}　else {
       renderHome();  // 未知のハッシュはホームに戻す
     }
   }
@@ -1849,4 +1639,8 @@ function renderContact() {
     </div>
   `;
 }
+
+// 外部モジュールを読み込む
+import('./games.js').then(() => console.log('games.js loaded'));
+import('./tools.js').then(() => console.log('tools.js loaded'));
      
