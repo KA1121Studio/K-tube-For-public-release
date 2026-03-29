@@ -1,0 +1,32 @@
+{
+  "tools": [
+    {
+      "id": "qrcode",
+      "title": "QRコード作成",
+      "thumbnail": "https://img.icons8.com/color/480/qr-code.png",
+      "embedUrl": "/Tools/QRCode/index.html",
+      "description": "URLやテキストからQRコードをすぐ作れる"
+    },
+    {
+      "id": "unitconverter",
+      "title": "単位変換ツール",
+      "thumbnail": "https://img.icons8.com/color/480/calculator.png",
+      "embedUrl": "/Tools/UnitConverter/index.html",
+      "description": "長さ・重さ・温度などあらゆる単位を変換"
+    },
+    {
+      "id": "stopwatch",
+      "title": "ストップウォッチ",
+      "thumbnail": "https://img.icons8.com/color/480/stopwatch.png",
+      "embedUrl": "/Tools/Stopwatch/index.html",
+      "description": "シンプルで使いやすいタイマー＆ストップウォッチ"
+    },
+    {
+      "id": "password",
+      "title": "パスワード生成器",
+      "thumbnail": "https://img.icons8.com/color/480/password.png",
+      "embedUrl": "/Tools/PasswordGenerator/index.html",
+      "description": "強力なランダムパスワードを即生成"
+    }
+  ]
+}
