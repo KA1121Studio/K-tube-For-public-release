@@ -456,7 +456,7 @@ async function renderWatch(videoId) {
     const backends = [
       { name: "Netlify Fast API (race)", custom: () => fetchFastestNetlify(videoId) },
       { name: "Piped Streams", url: () => `/piped/streams/${videoId}` },
-      { name: "Invidious Public (fallback)", url: () => `https://inv.tube/api/v1/videos/${videoId}` },
+
     ];
 
 for (const backend of backends) {
