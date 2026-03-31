@@ -145,7 +145,7 @@ function renderHome() {
   font-size: 18px;
   font-weight: 700;
   color: #6c6c6c;
-">ⓒ K-tube　V.1.32</h3>
+">ⓒ K-tube　V.2.32</h3>
 
 <div style="margin-top: 20px; font-size: 15px; color: #065fd4; text-align: center;">
   <span id="aboutLink" style="cursor: pointer; margin: 0 16px; text-decoration: underline; transition: color 0.2s;">K-tubeについて</span>
