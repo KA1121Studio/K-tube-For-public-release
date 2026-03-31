@@ -47,3 +47,6 @@ function renderToolPlay(tool) {
     </div>
   `;
 }
+
+window.loadTools = loadTools;
+window.renderToolPlay = renderToolPlay;
