@@ -1530,23 +1530,29 @@ function renderAbout() {
         <p style="font-size: 18px; color: #065fd4; text-align: center; margin-bottom: 40px;">広告なしで快適にYouTubeを楽しむ非公式クライアント</p>
         
         <div style="font-size: 17px; line-height: 1.8; color: #333;">
-          <p>K-tubeは、YouTubeの動画をより自由に視聴できるように作られたアプリです。</p>
-          <p>広告やトラッキングを排除し、プライバシーを守りながら、オリジナルプレイヤーでの高速再生、ゲーム・ツールの埋め込み、再生履歴の管理など、さまざまな便利機能を搭載しています。</p>
-          <p>現在ベータ版として運営中です。まだまだ改善の余地がたくさんありますが、皆さんの声でどんどん良くしていきます！</p>
+
+    <p>
+      K-tubeは、YouTubeが見られない環境でも動画を視聴できるよう設計された非公式クライアントです。
+    </p>
+    <p>
+      広告やトラッキングを排除し、プライバシーを守りながら、
+      高速再生・履歴管理・ゲームやツール機能などを提供します。
+    </p>
           
           <h2 style="font-size: 26px; margin: 48px 0 24px; color: #cc0000;">主な特徴</h2>
           <ul style="list-style: none; padding-left: 0; font-size: 17px; line-height: 2.2;">
-            <li>✓ 広告なし・トラッキングなしの快適視聴</li>
-            <li>✓ オリジナルプレイヤー（広告ブロック・高画質対応）</li>
-            <li>✓ ゲーム・ツールのフルスクリーン埋め込み</li>
-            <li>✓ 再生履歴の自動保存＆クリア機能</li>
-            <li>✓ ダークモード、自動再生、画質・地域設定などカスタマイズ</li>
+      <li>K-tubeオリジナルのK-tube APIを使用</li>
+      <li>広告なし・トラッキングなしの快適視聴</li>
+      <li>高速オリジナルプレイヤー（高画質対応）</li>
+      <li>ゲーム・ツールのフルスクリーン埋め込み</li>
+      <li>再生履歴の自動保存＆クリア機能</li>
+      <li>ダークモードや画質設定などのカスタマイズ</li>
           </ul>
         </div>
         
         <div style="text-align: center; margin: 60px 0; color: #666; font-size: 15px;">
           © 2025-2026 K-tube All Rights Reserved.<br>
-          非公式アプリです。YouTubeの利用規約を遵守してご利用ください。
+  
         </div>
         
         <button onclick="history.back()" style="
