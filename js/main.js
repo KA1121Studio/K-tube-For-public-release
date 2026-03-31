@@ -1355,21 +1355,21 @@ function renderSettings() {
       公式プレイヤー（YouTube埋め込み）
     </option>
     <option value="api1-original1" ${settings.defaultPlayer === 'api1-original1' ? 'selected' : ''}>
-      API1・オリジナル1（高画質・Invidious）
+      API1・オリジナル1（高画質・おすすめ・高速）
     </option>
     <option value="api1-original2" ${settings.defaultPlayer === 'api1-original2' ? 'selected' : ''}>
-      API1・オリジナル2（音声込み・Invidious）
+      API1・オリジナル2（音声込み・おすすめ・高速）
     </option>
     <option value="api2-original1" ${settings.defaultPlayer === 'api2-original1' ? 'selected' : ''}>
-      API2・オリジナル1（yt-dlp 高画質）
+      API2・オリジナル1（高画質・確実・速さは、まあまあ）
     </option>
     <option value="api2-original2" ${settings.defaultPlayer === 'api2-original2' ? 'selected' : ''}>
-      API2・オリジナル2（yt-dlp 360p）
+      API2・オリジナル2（音声込み・確実・速さは、まあまあ）
     </option>
   </select>
   <p style="font-size:13px; color:#606060; margin-top:8px;">
     ※変更後、次に開く動画から適用されます<br>
-    API1系は広告が少なく安定性が高い傾向があります
+    API1系は安定性が高い傾向があります
   </p>
 </div>
 
