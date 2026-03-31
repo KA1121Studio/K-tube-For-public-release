@@ -1018,6 +1018,8 @@ function updateSidebarActive() {
 window.addEventListener('load', () => {
   const darkMode = localStorage.getItem('darkMode') === 'true';
   document.body.classList.toggle('dark-mode', darkMode);
+  
+});
 
 window.addEventListener('hashchange', updateSidebarActive);
 window.addEventListener('load', updateSidebarActive);
