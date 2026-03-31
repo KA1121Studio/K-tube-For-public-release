@@ -47,3 +47,6 @@ function renderGamePlay(game) {
     </div>
   `;
 }
+
+window.loadGames = loadGames;
+window.renderGamePlay = renderGamePlay;
