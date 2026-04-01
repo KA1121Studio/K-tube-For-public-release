@@ -1,32 +1,19 @@
 {
   "tools": [
     {
-      "id": "qrcode",
-      "title": "QRコード作成",
-      "thumbnail": "https://img.icons8.com/color/480/qr-code.png",
-      "embedUrl": "/Tools/QRCode/index.html",
-      "description": "URLやテキストからQRコードをすぐ作れる"
+      "id": "Science",
+      "title": "Science",
+      "thumbnail": "https://i.postimg.cc/6Q7LP370/Screenshot-2026-04-01-22-04-43.png",
+      "embedUrl": "/Tools/Science/index.html",
+      "description": "K-tubeオリジナルのwebぷろきし"
     },
     {
-      "id": "unitconverter",
-      "title": "単位変換ツール",
-      "thumbnail": "https://img.icons8.com/color/480/calculator.png",
-      "embedUrl": "/Tools/UnitConverter/index.html",
-      "description": "長さ・重さ・温度などあらゆる単位を変換"
-    },
-    {
-      "id": "stopwatch",
-      "title": "ストップウォッチ",
-      "thumbnail": "https://img.icons8.com/color/480/stopwatch.png",
-      "embedUrl": "/Tools/Stopwatch/index.html",
-      "description": "シンプルで使いやすいタイマー＆ストップウォッチ"
-    },
-    {
-      "id": "password",
-      "title": "パスワード生成器",
-      "thumbnail": "https://img.icons8.com/color/480/password.png",
-      "embedUrl": "/Tools/PasswordGenerator/index.html",
-      "description": "強力なランダムパスワードを即生成"
+      "id": "yt-dl",
+      "title": "ytダウンローダー",
+      "thumbnail": "https://kotonohaworks.com/free-icons/wp-content/uploads/kkrn_icon_download_1.png",
+      "embedUrl": "/Tools/yt-dl/index.html",
+      "description": "K-tube APIを使った高速youtubeダウンローダー"
     }
+
   ]
 }
