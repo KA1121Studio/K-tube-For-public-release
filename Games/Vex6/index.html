@@ -1,66 +1,30 @@
 
+
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/html">
-
+<html lang="ja">
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui, shrink-to-fit=no" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vex6</title>
 
-
-    <title>Vex 6 Unblocked - ubg235 GameDistribution</title>
-
-    <link rel="icon" type="image/png" href="assets/icon.png">
-    <!-- For apple devices -->
-    <link rel="apple-touch-icon" type="image/png" href="assets/icon.png" />
-    <link rel="stylesheet" href="assets/css/app.css" type="text/css" />
-
-
-
-
-
-
-
-
-    <script src="patch/js/azerion-libs-m.js" defer></script>
-
+  <style>
+    html, body, iframe {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      overflow: hidden;
+    }
+  </style>
 </head>
+<body>
+  <iframe src="https://example.com" frameborder="0"></iframe>
 
-<body style="overflow:hidden;">
-    <div id="content"> </div>
-    <div id="orientation"></div>
-
-    <script type="text/javascript">
-        var gameName = "vex6.min.js";
-
-
-        var _azFeedback;
-
-
-
-
-
-        //This all here is for cache busting;
-        function addScript(src, buster, callback) {
-            var s = document.createElement('script');
-            s.setAttribute('src', src);
-            if (typeof callback === 'function') {
-                s.onload = callback;
-            }
-            document.body.appendChild(s);
-        }
-
-
-
-        addScript('version.js', Date.now(), function() {
-
-            addScript(gameName, Date.now(), function() {});
-
-        });
-    </script>
-    <script src="js/analytics_ubg_v1_4.js"></script>
+  <script>
+    // URLを変えたい場合はここを編集
+    const targetURL = "https://vex6-1.onrender.com/"
+    document.querySelector("iframe").src = targetURL
+  </script>
 </body>
-
 </html>
