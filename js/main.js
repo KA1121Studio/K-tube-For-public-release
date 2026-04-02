@@ -1527,7 +1527,7 @@ function renderAbout() {
     <div class="play-fullscreen" style="background: #f9f9f9; color: #111; overflow-y: auto; padding: 80px 20px 40px;">
       <div style="max-width: 860px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
         <h1 style="font-size: 42px; font-weight: 800; color: #cc0000; text-align: center; margin-bottom: 12px;">K-tube</h1>
-        <p style="font-size: 18px; color: #065fd4; text-align: center; margin-bottom: 40px;">広告なしで快適にYouTubeを楽しむ非公式クライアント</p>
+        <p style="font-size: 18px; color: #065fd4; text-align: center; margin-bottom: 40px;">YouTubeの最速非公式クライアント</p>
         
         <div style="font-size: 17px; line-height: 1.8; color: #333;">
 
@@ -1541,12 +1541,13 @@ function renderAbout() {
           
           <h2 style="font-size: 26px; margin: 48px 0 24px; color: #cc0000;">主な特徴</h2>
           <ul style="list-style: none; padding-left: 0; font-size: 17px; line-height: 2.2;">
-      <li>K-tubeオリジナルのK-tube APIを使用</li>
-      <li>広告なし・トラッキングなしの快適視聴</li>
-      <li>高速オリジナルプレイヤー（高画質対応）</li>
-      <li>ゲーム・ツールのフルスクリーン埋め込み</li>
-      <li>再生履歴の自動保存＆クリア機能</li>
-      <li>ダークモードや画質設定などのカスタマイズ</li>
+      <li>✅️　K-tubeオリジナルのK-tube APIを使用</li>
+      <li>✅️　広告なし・トラッキングなしの快適視聴</li>
+      <li>✅️　高速オリジナルプレイヤー（高画質対応）</li>
+      <li>✅️　ゲーム・ツールの提供</li>
+      <li>✅️　再生履歴の自動保存＆クリア機能</li>
+      <li>✅️　ダークモードや画質設定などのカスタマイズ</li>
+      <li>✅️　youtube動画の高速ダウンロード</li>
           </ul>
         </div>
         
