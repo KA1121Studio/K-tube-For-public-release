@@ -34,7 +34,7 @@ npn
 
 ### 依存関係
 
-npm install
+npm install （yt-dlpを使用する場合は、npn install && pip install yt-dlp）
 
 ### サーバー起動
 
