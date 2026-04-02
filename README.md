@@ -2,6 +2,8 @@
 
 K-tubeは、YouTubeが見られない環境でも動画を視聴できるよう設計された非公式クライアントです。
 
+デモURL https://k-tube-for-public-release.onrender.com
+
 ---
 
 ## デプロイ方法
