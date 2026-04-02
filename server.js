@@ -60,38 +60,15 @@ function updateTodayCount() {
 async function incrementAccesses() {
   const today = new Date().toISOString().split('T')[0];
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('access_stats')
-    .select('*')
-    .eq('date', today)
-    .single();
+    .insert({
+      date: today,
+      total_views: 1,
+      today_views: 1
+    });
 
-  if (error && error.code !== 'PGRST116') {
-    console.error("Supabase select error:", error);
-    return;
-  }
-
-  if (!data) {
-    const { error: insertError } = await supabase
-      .from('access_stats')
-      .insert({
-        date: today,
-        total_views: 1,
-        today_views: 1
-      });
-
-    if (insertError) console.error("Insert error:", insertError);
-  } else {
-    const { error: updateError } = await supabase
-      .from('access_stats')
-      .update({
-        total_views: data.total_views + 1,
-        today_views: data.today_views + 1
-      })
-      .eq('id', data.id);
-
-    if (updateError) console.error("Update error:", updateError);
-  }
+  console.log("insert test:", error);
 }
 
 app.get("/video", async (req, res) => {
