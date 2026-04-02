@@ -790,57 +790,87 @@ try {
     if (commentsArea) setupComments(videoId);
 
  
-    const relatedList = document.getElementById('relatedList');
+  const relatedList = document.getElementById('relatedList');
 if (relatedList) {
   relatedList.innerHTML = '<div style="padding:20px; text-align:center; color:#606060;">読み込み中...</div>';
 
   try {
     let items = [];
 
-    // ① まず正規の関連動画を取得
-    const streamData = await pipedFetch(`/streams/${videoId}`);
+    // 🔥 強化検索クエリ
+    let searchQuery = metaData.title || videoId;
 
-    if (Array.isArray(streamData?.relatedStreams)) {
-      items = streamData.relatedStreams;
+    if ((metaData.uploader || metaData.uploaderName)) {
+      searchQuery += ' ' + (metaData.uploader || metaData.uploaderName);
     }
 
-    // ② もし空なら検索フォールバック
-    if (!items.length) {
-      const searchQuery = metaData.title || videoId;
-      const relatedData = await pipedFetch('/search', { q: searchQuery, filter: 'videos' });
+    // ① 1回目検索（多めに取得）
+    const relatedData = await pipedFetch('/search', {
+      q: searchQuery,
+      filter: 'videos'
+    });
 
-      items = Array.isArray(relatedData) ? relatedData :
-              (relatedData?.items || relatedData?.results || relatedData?.videos || []);
+    items = Array.isArray(relatedData) ? relatedData :
+            (relatedData?.items || relatedData?.results || relatedData?.videos || []);
+
+    // 🔥 型フィルタ + 重複排除
+    items = items.filter(item => {
+      const relVid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
+      return relVid && relVid !== videoId;
+    });
+
+    // ② 足りなければタイトルのみで再検索
+    if (items.length < 6) {
+      const fallback = await pipedFetch('/search', {
+        q: metaData.title || videoId
+      });
+
+      let more = Array.isArray(fallback) ? fallback :
+                 (fallback?.items || fallback?.results || fallback?.videos || []);
+
+      more = more.filter(item => {
+        const relVid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
+        return relVid && relVid !== videoId;
+      });
+
+      items = [...items, ...more];
     }
 
-    if (items.length) {
+    // 🔥 重複動画ID削除
+    const seen = new Set();
+    items = items.filter(item => {
+      const relVid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
+      if (seen.has(relVid)) return false;
+      seen.add(relVid);
+      return true;
+    });
+
+    // 🔥 最低6件保証
+    const finalItems = items.slice(0, 6);
+
+    if (finalItems.length) {
       relatedList.innerHTML = '';
 
-      items.slice(0, 6).forEach(item => {
+      finalItems.forEach(item => {
         const relVid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
+        const thumb = `https://i.ytimg.com/vi/${relVid}/hqdefault.jpg`;
 
-        if (relVid && relVid !== videoId) {
-
-          // 🔥 サムネは直接CDN
-          const thumb = `https://i.ytimg.com/vi/${relVid}/hqdefault.jpg`;
-
-          const div = document.createElement('div');
-          div.className = 'related-item';
-          div.innerHTML = `
-            <div class="related-thumb">
-              <img src="${thumb}" alt="" loading="lazy" decoding="async"
-                onerror="this.src='https://i.ytimg.com/vi/${relVid}/mqdefault.jpg'">
+        const div = document.createElement('div');
+        div.className = 'related-item';
+        div.innerHTML = `
+          <div class="related-thumb">
+            <img src="${thumb}" alt="" loading="lazy" decoding="async"
+              onerror="this.src='https://i.ytimg.com/vi/${relVid}/mqdefault.jpg'">
+          </div>
+          <div class="related-info">
+            <div class="title">${escapeHtml(item.title || '(タイトルなし)')}</div>
+            <div style="color:#606060;font-size:13px">
+              ${escapeHtml(item.uploaderName || item.uploader || '不明')} ・ ${fmtNum(item.views || 0)} 回
             </div>
-            <div class="related-info">
-              <div class="title">${escapeHtml(item.title || '(タイトルなし)')}</div>
-              <div style="color:#606060;font-size:13px">
-                ${escapeHtml(item.uploaderName || item.uploader || '不明')} ・ ${fmtNum(item.views || 0)} 回
-              </div>
-            </div>
-          `;
-          div.addEventListener('click', () => location.hash = `watch=${relVid}`);
-          relatedList.appendChild(div);
-        }
+          </div>
+        `;
+        div.addEventListener('click', () => location.hash = `watch=${relVid}`);
+        relatedList.appendChild(div);
       });
 
     } else {
@@ -852,8 +882,6 @@ if (relatedList) {
     relatedList.innerHTML = '<div style="padding:20px; color:#c00;">関連動画の読み込みに失敗しました</div>';
   }
 }
-
-
     
     setTimeout(() => {
       const container = document.getElementById('descriptionContainer');
