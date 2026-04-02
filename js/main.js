@@ -201,7 +201,7 @@ async function loadHome() {
 async function makeVideoCard(item) {
   const vid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
   const title = item.title || '';
-  const vid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
+  
 const th = `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
   const chId = item.uploaderUrl?.split('/').pop() || '';
   const chTitle = item.uploaderName || '';
