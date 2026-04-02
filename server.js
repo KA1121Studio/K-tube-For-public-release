@@ -7,7 +7,7 @@ import { execSync } from "child_process";
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = "https://hrbnspsmvlnlndkrfeij.supabase.co";
-const supabaseKey = "sb_publishable_7H3Y61-DO70Z4SKU2Dvgrg_UST3d5iF";
+const supabaseKey = "sb_secret_mlqSdIw_lMXrKyA4PgrNRw_z8FYip-Y";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
