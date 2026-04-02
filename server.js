@@ -4,6 +4,14 @@ import { fileURLToPath } from "url";
 import path from "path";
 import { execSync } from "child_process";   
 
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase
+const supabaseUrl = "https://hrbnspsmvlnlndkrfeij.supabase.co";
+const supabaseKey = "sb_publishable_7H3Y61-DO70Z4SKU2Dvgrg_UST3d5iF";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -29,6 +37,7 @@ app.get("/", (req, res) => {
   totalAccesses++;
   todayAccesses++;
   updateTodayCount();
+  incrementAccesses(); 
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
@@ -36,6 +45,7 @@ app.get("/watch.html", (req, res) => {
   totalAccesses++;
   todayAccesses++;
   updateTodayCount();
+  incrementAccesses();
   res.sendFile(path.join(__dirname, "watch.html"));
 });
 
@@ -45,6 +55,34 @@ function updateTodayCount() {
   if (currentDate !== todayDate) {
     todayAccesses = 0;
     todayDate = currentDate;
+  }
+}
+
+async function incrementAccesses() {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('access_stats')
+    .select('*')
+    .eq('date', today)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error("Supabase select error:", error);
+    return;
+  }
+
+  if (!data) {
+    await supabase.from('access_stats').insert({
+      date: today,
+      total_views: 1,
+      today_views: 1
+    });
+  } else {
+    await supabase.from('access_stats').update({
+      total_views: data.total_views + 1,
+      today_views: data.today_views + 1
+    }).eq('id', data.id);
   }
 }
 
