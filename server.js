@@ -40,7 +40,7 @@ app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.get("/watch.html", (req, res) => {
+app.get("/watch.html", async (req, res) => {
   totalAccesses++;
   todayAccesses++;
   updateTodayCount();
