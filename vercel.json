@@ -1,14 +1,13 @@
 {
   "version": 2,
   "routes": [
-    // CSS・JS
+
     { "src": "/css/(.*)", "dest": "/css/$1" },
     { "src": "/js/(.*)", "dest": "/js/$1" },
 
-    // Service Worker
     { "src": "/sw.js", "dest": "/Tools/sw.js" },
 
-    // Games
+
     { "src": "/games/2048", "dest": "/Games/2048/index.html" },
     { "src": "/games/deer", "dest": "/Games/Deer/index.html" },
     { "src": "/games/gta", "dest": "/Games/GTA/index.html" },
@@ -19,14 +18,13 @@
     { "src": "/games/vex6", "dest": "/Games/Vex6/index.html" },
     { "src": "/games/osero", "dest": "/Games/osero/index.html" },
 
-    // Tools
+   
     { "src": "/tools/science", "dest": "/Tools/Science/index.html" },
     { "src": "/tools/yt-dl", "dest": "/Tools/yt-dl/index.html" },
 
-    // Watch
     { "src": "/watch", "dest": "/watch.html" },
 
-    // ルート
+
     { "src": "/", "dest": "/index.html" }
   ]
 }
