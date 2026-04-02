@@ -475,7 +475,7 @@ app.all("/Tools/Science/proxy/*", async (req, res) => {
       redirect: "manual"
     })
 
-    // 🔁 リダイレクト対応
+    //  リダイレクト対応
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location")
       if (location) {
@@ -486,13 +486,13 @@ app.all("/Tools/Science/proxy/*", async (req, res) => {
 
     const contentType = response.headers.get("content-type") || ""
 
-    // 🍪 cookie返却
+    //  cookie返却
     const setCookie = response.headers.raw()["set-cookie"]
     if (setCookie) {
       res.setHeader("set-cookie", setCookie)
     }
 
-    // 📦 バイナリ対応
+    //  バイナリ対応
     const isText =
       contentType.includes("text") ||
       contentType.includes("javascript") ||
@@ -617,7 +617,7 @@ window.WebSocket = function(url, protocols){
 
       body = body.replace("</head>", inject + "</head>")
 
-      // 🔗 リンク書き換え
+      //  リンク書き換え
       body = body.replace(/(src|href)=["'](.*?)["']/gi, (m, attr, link) => {
         try {
           if (link.startsWith("data:") || link.startsWith("javascript:")) return m
@@ -632,7 +632,7 @@ window.WebSocket = function(url, protocols){
       body = body.replace(/<iframe/gi, '<iframe sandbox="allow-scripts allow-forms"')
     }
 
-    // 🔓 CSP解除＆再設定
+    // CSP解除＆再設定
     res.removeHeader("content-security-policy")
     res.removeHeader("x-frame-options")
 
