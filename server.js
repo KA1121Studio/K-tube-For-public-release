@@ -6,7 +6,6 @@ import { execSync } from "child_process";
 
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase
 const supabaseUrl = "https://hrbnspsmvlnlndkrfeij.supabase.co";
 const supabaseKey = "sb_publishable_7H3Y61-DO70Z4SKU2Dvgrg_UST3d5iF";
 
@@ -33,11 +32,11 @@ const videoCache = new Map();
 const CACHE_TIME = 1000 * 60 * 60 * 3; // 3時間
 
 // ====================== ルート ======================
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   totalAccesses++;
   todayAccesses++;
   updateTodayCount();
-  incrementAccesses(); 
+  await incrementAccesses(); // ← await 必須
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
@@ -45,7 +44,7 @@ app.get("/watch.html", (req, res) => {
   totalAccesses++;
   todayAccesses++;
   updateTodayCount();
-  incrementAccesses();
+  await incrementAccesses();
   res.sendFile(path.join(__dirname, "watch.html"));
 });
 
