@@ -448,7 +448,7 @@ async function renderWatch(videoId) {
    // ── メタデータ取得
     const backends = [
       { name: "K-tube API (race)", custom: () => fetchFastestNetlify(videoId) },
-      { name: "Piped Streams", url: () => `/piped/streams/${videoId}` },
+
 
     ];
 
