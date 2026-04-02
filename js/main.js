@@ -791,44 +791,67 @@ try {
 
  
     const relatedList = document.getElementById('relatedList');
-    if (relatedList) {
-      relatedList.innerHTML = '<div style="padding:20px; text-align:center; color:#606060;">読み込み中...</div>';
-      try {
-        const searchQuery = metaData.title || videoId;
-        const relatedData = await pipedFetch('/search', { q: searchQuery, filter: 'videos' });
-        let items = Array.isArray(relatedData) ? relatedData :
-                    (relatedData?.items || relatedData?.results || relatedData?.videos || []);
-        if (items.length > 1) {
-          relatedList.innerHTML = '';
-          items.slice(0, 6).forEach(item => {
-            const relVid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
-            if (relVid && relVid !== videoId) {
-              const div = document.createElement('div');
-              div.className = 'related-item';
-              div.innerHTML = `
-                <div class="related-thumb">
-                  <img src="${item.thumbnail || ''}" alt="" loading="lazy" onerror="this.src='https://via.placeholder.com/168x94?text=No+Thumb'">
-                </div>
-                <div class="related-info">
-                  <div class="title">${escapeHtml(item.title || '(タイトルなし)')}</div>
-                  <div style="color:#606060;font-size:13px">
-                    ${escapeHtml(item.uploaderName || '不明')} ・ ${fmtNum(item.views || 0)} 回
-                  </div>
-                </div>
-              `;
-              div.addEventListener('click', () => location.hash = `watch=${relVid}`);
-              relatedList.appendChild(div);
-            }
-          });
-        } else {
-          relatedList.innerHTML = '<div style="padding:20px; color:#606060;">関連動画が見つかりませんでした</div>';
-        }
-      } catch (e) {
-        console.error('関連動画取得失敗:', e);
-        relatedList.innerHTML = '<div style="padding:20px; color:#c00;">関連動画の読み込みに失敗しました</div>';
-      }
+if (relatedList) {
+  relatedList.innerHTML = '<div style="padding:20px; text-align:center; color:#606060;">読み込み中...</div>';
+
+  try {
+    let items = [];
+
+    // ① まず正規の関連動画を取得
+    const streamData = await pipedFetch(`/streams/${videoId}`);
+
+    if (Array.isArray(streamData?.relatedStreams)) {
+      items = streamData.relatedStreams;
     }
 
+    // ② もし空なら検索フォールバック
+    if (!items.length) {
+      const searchQuery = metaData.title || videoId;
+      const relatedData = await pipedFetch('/search', { q: searchQuery, filter: 'videos' });
+
+      items = Array.isArray(relatedData) ? relatedData :
+              (relatedData?.items || relatedData?.results || relatedData?.videos || []);
+    }
+
+    if (items.length) {
+      relatedList.innerHTML = '';
+
+      items.slice(0, 6).forEach(item => {
+        const relVid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
+
+        if (relVid && relVid !== videoId) {
+
+          // 🔥 サムネは直接CDN
+          const thumb = `https://i.ytimg.com/vi/${relVid}/hqdefault.jpg`;
+
+          const div = document.createElement('div');
+          div.className = 'related-item';
+          div.innerHTML = `
+            <div class="related-thumb">
+              <img src="${thumb}" alt="" loading="lazy" decoding="async"
+                onerror="this.src='https://i.ytimg.com/vi/${relVid}/mqdefault.jpg'">
+            </div>
+            <div class="related-info">
+              <div class="title">${escapeHtml(item.title || '(タイトルなし)')}</div>
+              <div style="color:#606060;font-size:13px">
+                ${escapeHtml(item.uploaderName || item.uploader || '不明')} ・ ${fmtNum(item.views || 0)} 回
+              </div>
+            </div>
+          `;
+          div.addEventListener('click', () => location.hash = `watch=${relVid}`);
+          relatedList.appendChild(div);
+        }
+      });
+
+    } else {
+      relatedList.innerHTML = '<div style="padding:20px; color:#606060;">関連動画が見つかりませんでした</div>';
+    }
+
+  } catch (e) {
+    console.error('関連動画取得失敗:', e);
+    relatedList.innerHTML = '<div style="padding:20px; color:#c00;">関連動画の読み込みに失敗しました</div>';
+  }
+}
 
 
     
