@@ -73,16 +73,25 @@ async function incrementAccesses() {
   }
 
   if (!data) {
-    await supabase.from('access_stats').insert({
-      date: today,
-      total_views: 1,
-      today_views: 1
-    });
+    const { error: insertError } = await supabase
+      .from('access_stats')
+      .insert({
+        date: today,
+        total_views: 1,
+        today_views: 1
+      });
+
+    if (insertError) console.error("Insert error:", insertError);
   } else {
-    await supabase.from('access_stats').update({
-      total_views: data.total_views + 1,
-      today_views: data.today_views + 1
-    }).eq('id', data.id);
+    const { error: updateError } = await supabase
+      .from('access_stats')
+      .update({
+        total_views: data.total_views + 1,
+        today_views: data.today_views + 1
+      })
+      .eq('id', data.id);
+
+    if (updateError) console.error("Update error:", updateError);
   }
 }
 
@@ -266,9 +275,10 @@ app.get("/proxy", async (req, res) => {
     todayDate = currentDate;
   }
 
-  // ここもアクセス数としてカウント
+  
   totalAccesses++;
-  todayAccesses++;
+todayAccesses++;
+incrementAccesses();   
 
   const range = req.headers.range || "bytes=0-";
 
