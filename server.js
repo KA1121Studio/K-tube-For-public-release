@@ -457,27 +457,22 @@ app.get("/stats", (req, res) => {
 });
 
 
-app.get("/fake-views", (req, res) => {
+app.get("/fake-views", async (req, res) => {
   try {
     const times = parseInt(req.query.times) || 1;
-    if (isNaN(times) || times < 1 || times > 1000) {
-      return res.status(400).json({ error: "回数は1〜1000の間で指定してください" });
+
+    for (let i = 0; i < times; i++) {
+      await incrementAccesses();   // ← これ追加
     }
-
-    totalAccesses += times;
-    todayAccesses += times;
-
-    console.log(`[FAKE] ${times}回分追加 → total:${totalAccesses} today:${todayAccesses}`);
 
     res.json({
       success: true,
-      added: times,
-      total_views: totalAccesses,
-      today_views: todayAccesses
+      added: times
     });
+
   } catch (err) {
     console.error("fake-views error:", err);
-    res.status(500).json({ error: "サーバー内部エラー", message: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
