@@ -6,8 +6,10 @@ import { execSync } from "child_process";
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = "https://hrbnspsmvlnlndkrfeij.supabase.co";
-const supabaseKey = "sb_secret_mlqSdIw_lMXrKyA4PgrNRw_z8FYip-Y";
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -60,6 +62,8 @@ function updateTodayCount() {
 async function incrementAccesses() {
   const today = new Date().toISOString().split('T')[0];
 
+  console.log("incrementAccesses called");
+
   const { error } = await supabase
     .from('access_stats')
     .insert({
@@ -68,9 +72,12 @@ async function incrementAccesses() {
       today_views: 1
     });
 
-  console.log("insert test:", error);
+  if (error) {
+    console.error("INSERT ERROR:", error);
+  } else {
+    console.log("INSERT SUCCESS");
+  }
 }
-
 app.get("/video", async (req, res) => {
   const videoId = req.query.id;
   if (!videoId) return res.status(400).json({ error: "video id required" });
@@ -254,7 +261,7 @@ app.get("/proxy", async (req, res) => {
   
   totalAccesses++;
 todayAccesses++;
-incrementAccesses();   
+await incrementAccesses();
 
   const range = req.headers.range || "bytes=0-";
 
