@@ -450,7 +450,23 @@ app.get("/download", async (req, res) => {
 });
 
 // 統計取得API
-app.get("/stats", (req, res) => {
+app.get("/stats", async (req, res) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("access_stats")
+    .select("*")
+    .eq("date", today)
+    .single();
+
+  if (error || !data) {
+    return res.json({
+      total_views: 0,
+      today_views: 0,
+      online_now: 0
+    });
+  }
+
   const now = Date.now();
   let onlineCount = 0;
 
@@ -462,19 +478,12 @@ app.get("/stats", (req, res) => {
     }
   }
 
-  const currentDate = new Date().toISOString().split('T')[0];
-  if (currentDate !== todayDate) {
-    todayAccesses = 0;
-    todayDate = currentDate;
-  }
-
   res.json({
-    total_views: totalAccesses,
-    today_views: todayAccesses,
+    total_views: data.total_views,
+    today_views: data.today_views,
     online_now: onlineCount
   });
 });
-
 
 app.get("/fake-views", async (req, res) => {
   try {
