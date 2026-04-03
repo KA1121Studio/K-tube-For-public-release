@@ -62,22 +62,41 @@ function updateTodayCount() {
 async function incrementAccesses() {
   const today = new Date().toISOString().split('T')[0];
 
-  console.log("incrementAccesses called");
-
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('access_stats')
-    .insert({
-      date: today,
-      total_views: 1,
-      today_views: 1
-    });
+    .select('*')
+    .eq('date', today);
 
   if (error) {
-    console.error("INSERT ERROR:", error);
+    console.error("Select error:", error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    const { error: insertError } = await supabase
+      .from('access_stats')
+      .insert({
+        date: today,
+        total_views: 1,
+        today_views: 1
+      });
+
+    if (insertError) console.error("Insert error:", insertError);
   } else {
-    console.log("INSERT SUCCESS");
+    const row = data[0];
+
+    const { error: updateError } = await supabase
+      .from('access_stats')
+      .update({
+        total_views: row.total_views + 1,
+        today_views: row.today_views + 1
+      })
+      .eq('id', row.id);
+
+    if (updateError) console.error("Update error:", updateError);
   }
 }
+
 app.get("/video", async (req, res) => {
   const videoId = req.query.id;
   if (!videoId) return res.status(400).json({ error: "video id required" });
