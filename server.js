@@ -11,7 +11,7 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
