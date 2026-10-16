@@ -1,4 +1,6 @@
       const PIPED_API_BASE = '/piped';
+      const INVIDIOUS_API_BASE = '/invidious';
+
       const MAX_RESULTS = 12;
       const el = id => document.getElementById(id);
       const app = el('app');
@@ -31,20 +33,147 @@
         return Math.floor(s/31536000)+'年以上前';
       }
 
-      async function pipedFetch(endpoint, params = {}) {
-        let path = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
-        const queryString = new URLSearchParams(params).toString();
-        const fullPath = queryString ? `${path}?${queryString}` : path;
-        const response = await fetch(`${PIPED_API_BASE}${fullPath}`, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!response.ok) {
-          throw new Error(`Piped proxy error: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-      }
+// ─────────────────────────────────────────────
+// 生fetch（タイムアウト付き）
+// ─────────────────────────────────────────────
+async function rawFetchJson(url, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: controller.signal
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
+// ─────────────────────────────────────────────
+// Invidious → Piped 形式に正規化
+// ─────────────────────────────────────────────
+function normalizeInvidious(endpoint, data) {
+  // ── 検索 / トレンド（配列）
+  if (endpoint.startsWith('/trending') || endpoint.startsWith('/search')) {
+    const arr = Array.isArray(data) ? data : (data.items || data.videos || []);
+    return arr.map(v => {
+      const vid = v.videoId || '';
+      return {
+        url: `/watch?v=${vid}`,
+        title: v.title || '',
+        thumbnail: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
+        uploaderName: v.author || '',
+        uploaderUrl: `/channel/${v.authorId || ''}`,
+        views: v.viewCount || 0,
+        uploaded: v.published ? new Date(v.published * 1000).toISOString() : '',
+        uploadedDate: v.published ? new Date(v.published * 1000).toISOString() : '',
+        duration: v.lengthSeconds || 0,
+        shortDescription: v.description || ''
+      };
+    });
+  }
+
+  // ── チャンネル
+  if (endpoint.startsWith('/channel/')) {
+    const vids = (data.latestVideos || []).map(v => {
+      const vid = v.videoId || '';
+      return {
+        url: `/watch?v=${vid}`,
+        title: v.title || '',
+        thumbnail: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
+        uploaderName: v.author || data.author || '',
+        uploaderUrl: `/channel/${v.authorId || data.authorId || ''}`,
+        views: v.viewCount || 0,
+        uploaded: v.published ? new Date(v.published * 1000).toISOString() : '',
+        uploadedDate: v.published ? new Date(v.published * 1000).toISOString() : ''
+      };
+    });
+    return {
+      name: data.author || '',
+      description: data.description || '',
+      avatarUrl: data.authorThumbnails?.slice(-1)[0]?.url || '',
+      subscriberCount: data.subCount || 0,
+      relatedStreams: vids,
+      videos: vids
+    };
+  }
+
+  // ── コメント
+  if (endpoint.startsWith('/comments/')) {
+    return {
+      comments: (data.comments || []).map(c => ({
+        author: c.author || '',
+        thumbnail: c.authorThumbnails?.[0]?.url || '',
+        commentText: c.content || '',
+        commentedTime: c.publishedText || '',
+        likeCount: c.likeCount || 0
+      })),
+      nextpage: data.continuation || null
+    };
+  }
+
+  // ── 動画詳細
+  if (endpoint.startsWith('/streams/')) {
+    const vid = endpoint.split('/').pop();
+    return {
+      title: data.title || '',
+      description: data.description || '',
+      viewCount: data.viewCount || 0,
+      likeCount: data.likeCount || 0,
+      published: data.published ? new Date(data.published * 1000).toISOString() : '',
+      uploader: data.author || '',
+      channelId: data.authorId || '',
+      uploaderAvatar: data.authorThumbnails?.slice(-1)[0]?.url || '',
+      thumbnail: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
+      lengthSeconds: data.lengthSeconds || 0,
+      formatStreams: data.formatStreams || [],
+      adaptiveFormats: data.adaptiveFormats || [],
+      relatedStreams: (data.recommendedVideos || []).map(v => ({
+        url: `/watch?v=${v.videoId}`,
+        title: v.title,
+        thumbnail: `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`,
+        uploaderName: v.author,
+        uploaderUrl: `/channel/${v.authorId}`,
+        views: v.viewCount,
+        uploaded: v.published ? new Date(v.published * 1000).toISOString() : ''
+      }))
+    };
+  }
+
+  return data;
+}
+
+// ─────────────────────────────────────────────
+// Piped と Invidious を並列で叩いて先勝ち採用
+// ─────────────────────────────────────────────
+async function pipedFetch(endpoint, params = {}) {
+  const path = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+  const qs = new URLSearchParams(params).toString();
+  const full = qs ? `${path}?${qs}` : path;
+
+  const pipedUrl = `${PIPED_API_BASE}${full}`;
+  const invUrl   = `${INVIDIOUS_API_BASE}${full}`;
+
+  try {
+    const result = await Promise.any([
+      rawFetchJson(pipedUrl, 12000).then(data => ({ source: 'piped', data })),
+      rawFetchJson(invUrl,   12000).then(data => ({
+        source: 'invidious',
+        data: normalizeInvidious(endpoint, data)
+      }))
+    ]);
+
+    console.log(`[pipedFetch] ${endpoint} → ${result.source} 成功`);
+    return result.data;
+
+  } catch (e) {
+    console.error(`[pipedFetch] ${endpoint} → 全滅:`, e.message);
+    throw new Error('Piped / Invidious の両方で取得に失敗しました');
+  }
+}
       async function getChannelThumbPiped(channelId) {
         if (channelThumbCache[channelId]) return channelThumbCache[channelId];
         try {
