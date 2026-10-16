@@ -442,6 +442,91 @@ app.get('/piped/*', async (req, res) => {
   res.status(503).json({ error: 'All Piped instances failed' });
 });
 
+// ====================== Invidious プロキシ ======================
+const INV_API_LIST_URL = 'https://splendid-jelly-e731bd.netlify.app/.netlify/functions/list';
+
+let invidiousApiCache = null;
+let invidiousApiCacheTime = 0;
+const INV_CACHE_TTL = 1000 * 60 * 30; // 30分キャッシュ
+
+async function getInvidiousApis() {
+  if (invidiousApiCache && Date.now() - invidiousApiCacheTime < INV_CACHE_TTL) {
+    return invidiousApiCache;
+  }
+  try {
+    const res = await fetch(INV_API_LIST_URL, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`list fetch ${res.status}`);
+    const data = await res.json();
+    const apis = (data.apis || []).filter(u => u.startsWith('https://'));
+    invidiousApiCache = apis;
+    invidiousApiCacheTime = Date.now();
+    console.log(`Invidious API list cached: ${apis.length} instances`);
+    return apis;
+  } catch (e) {
+    console.error('Invidious list fetch failed:', e.message);
+    return invidiousApiCache || [];
+  }
+}
+
+// Piped と同じパスを Invidious に投げるためのパス変換
+// /trending?region=JP → /api/v1/trending?region=JP
+// /search?q=...       → /api/v1/search?q=...
+// /channel/UCxxx      → /api/v1/channels/UCxxx
+// /comments/VIDEO_ID  → /api/v1/comments/VIDEO_ID
+function pipedPathToInvidious(path) {
+  if (path === '/trending') return '/api/v1/trending';
+  if (path === '/search') return '/api/v1/search';
+  if (path.startsWith('/channel/')) return '/api/v1/channels/' + path.slice('/channel/'.length);
+  if (path.startsWith('/comments/')) return '/api/v1/comments/' + path.slice('/comments/'.length);
+  if (path.startsWith('/streams/')) return '/api/v1/videos/' + path.slice('/streams/'.length);
+  if (path.startsWith('/playlists/')) return '/api/v1/playlists/' + path.slice('/playlists/'.length);
+  return '/api/v1' + path;
+}
+
+app.get('/invidious/*', async (req, res) => {
+  const path = req.path.replace('/invidious', '');
+  const invPath = pipedPathToInvidious(path);
+  const query = new URLSearchParams(req.query).toString();
+  const queryStr = query ? '?' + query : '';
+
+  const apis = await getInvidiousApis();
+  if (apis.length === 0) {
+    return res.status(503).json({ error: 'No Invidious instances available' });
+  }
+
+  // 全インスタンスを並列で叩き、最初に成功したものを採用（Promise.any 風）
+  // ただし fetch を全部走らせると負荷が高いので、先頭 N 件に絞る
+  const candidates = apis.slice(0, 15);
+
+  try {
+    const result = await Promise.any(
+      candidates.map(async (base) => {
+        const url = `${base}${invPath}${queryStr}`;
+        const r = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (compatible; K-tube/1.0)'
+          },
+          signal: AbortSignal.timeout(8000) // 8秒タイムアウト
+        });
+        if (!r.ok) throw new Error(`${base} → ${r.status}`);
+        const json = await r.json();
+        return { base, json };
+      })
+    );
+
+    console.log(`Invidious success: ${result.base}${invPath}`);
+    res.setHeader('Content-Type', 'application/json');
+    res.json(result.json);
+
+  } catch (e) {
+    console.error('All Invidious instances failed:', e.message);
+    res.status(503).json({ error: 'All Invidious instances failed' });
+  }
+});
+
 app.get("/download", async (req, res) => {
   const url = req.query.url;
   if (!url) {
