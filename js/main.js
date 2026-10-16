@@ -77,8 +77,8 @@ function normalizeInvidious(endpoint, data) {
   }
 
   // ── チャンネル
-  if (endpoint.startsWith('/channel/')) {
-    const vids = (data.latestVideos || []).map(v => {
+if (endpoint.startsWith('/channel/')) {
+  const vids = (data.latestVideos || []).map(v => {
       const vid = v.videoId || '';
       return {
         url: `/watch?v=${vid}`,
@@ -91,15 +91,15 @@ function normalizeInvidious(endpoint, data) {
         uploadedDate: v.published ? new Date(v.published * 1000).toISOString() : ''
       };
     });
-    return {
-      name: data.author || '',
-      description: data.description || '',
-      avatarUrl: data.authorThumbnails?.slice(-1)[0]?.url || '',
-      subscriberCount: data.subCount || 0,
-      relatedStreams: vids,
-      videos: vids
-    };
-  }
+  return {
+    name: data.author || '',
+    description: data.description || '',
+    avatarUrl: toYt3Avatar(data.authorThumbnails?.slice(-1)[0]?.url || '', 176), // ← 変換（大サイズ）
+    subscriberCount: data.subCount || 0,
+    relatedStreams: vids,
+    videos: vids
+  };
+}
 
   // ── コメント
   if (endpoint.startsWith('/comments/')) {
@@ -174,18 +174,61 @@ async function pipedFetch(endpoint, params = {}) {
     throw new Error('Piped / Invidious の両方で取得に失敗しました');
   }
 }
-      async function getChannelThumbPiped(channelId) {
-        if (channelThumbCache[channelId]) return channelThumbCache[channelId];
-        try {
-          const data = await pipedFetch(`/channel/${channelId}`);
-          const thumb = data.avatarUrl || '';
-          channelThumbCache[channelId] = thumb;
-          return thumb;
-        } catch (e) {
-          console.warn('channel thumb failed', e);
-          return '';
-        }
-      }
+
+// ─────────────────────────────────────────────
+// チャンネルアイコンURLを yt3.ggpht.com に変換
+// ─────────────────────────────────────────────
+function toYt3Avatar(url, size = 88) {
+  if (!url || typeof url !== 'string') return '';
+
+  // data: や 空文字 は除外
+  if (url.startsWith('data:')) return '';
+
+  try {
+    // すでに yt3.ggpht.com の場合はサイズだけ揃えて返す
+    if (url.includes('yt3.ggpht.com')) {
+      return url.replace(/=s\d+[^=]*$/, `=s${size}-c-k-c0x00ffffff-no-rj`);
+    }
+
+    // URL からパス部分（/ytc/... または /channel/... など）を抽出
+    const u = new URL(url, location.origin);
+
+    // パスに /ytc/ が含まれていれば、その後ろを丸ごと使う
+    const ytcIndex = u.pathname.indexOf('/ytc/');
+    if (ytcIndex !== -1) {
+      const ytcPath = u.pathname.slice(ytcIndex); // /ytc/AIdro_...
+      // クエリがあれば保持（サイズ指定など）
+      const query = u.search || '';
+      return `https://yt3.ggpht.com${ytcPath}${query}`;
+    }
+
+    // ggpht.com 系の別パス（/channel/UCxxx など）は
+    // yt3.ggpht.com にホストだけ差し替え
+    if (url.includes('ggpht.com') || url.includes('googleusercontent.com')) {
+      return `https://yt3.ggpht.com${u.pathname}${u.search}`;
+    }
+
+    // それ以外（i.ytimg.com など）は変換不可 → 空を返す
+    return '';
+  } catch (e) {
+    console.warn('toYt3Avatar failed:', url, e);
+    return '';
+  }
+}
+
+async function getChannelThumbPiped(channelId) {
+  if (channelThumbCache[channelId]) return channelThumbCache[channelId];
+  try {
+    const data = await pipedFetch(`/channel/${channelId}`);
+    const rawThumb = data.avatarUrl || '';
+    const thumb = toYt3Avatar(rawThumb, 88); // ← 変換（小サイズ）
+    channelThumbCache[channelId] = thumb;
+    return thumb;
+  } catch (e) {
+    console.warn('channel thumb failed', e);
+    return '';
+  }
+}
 
       window.addEventListener('hashchange', renderByHash);
       homeBtn.addEventListener('click', () => { location.hash = ''; });
@@ -658,7 +701,10 @@ for (const backend of backends) {
 
     const chName = metaData.uploader || metaData.author || metaData.channelName || metaData.uploaderName || '不明';
     let chId = metaData.channelId || metaData.authorId || (metaData.uploaderUrl?.split('/').pop() || '');
-    let chThumb = metaData.uploaderAvatar || metaData.avatar || metaData.thumbnail || '';
+    let chThumb = toYt3Avatar(
+  metaData.uploaderAvatar || metaData.avatar || '',
+  88
+);
 
 
     let subscriberCount = metaData.subscriberCount ?? 0; 
@@ -667,9 +713,9 @@ for (const backend of backends) {
         const channelData = await pipedFetch(`/channel/${chId}`);
         if (channelData) {
 
-          if (channelData.avatarUrl && !channelData.avatarUrl.includes('/vi/') && !channelData.avatarUrl.includes('thumbnail')) {
-            chThumb = channelData.avatarUrl;
-          }
+if (channelData.avatarUrl && !channelData.avatarUrl.includes('/vi/') && !channelData.avatarUrl.includes('thumbnail')) {
+  chThumb = toYt3Avatar(channelData.avatarUrl, 88);
+}
 
           if (typeof channelData.subscriberCount === 'number' && channelData.subscriberCount > 0) {
             subscriberCount = channelData.subscriberCount;
@@ -1078,7 +1124,7 @@ if (relatedList) {
           if (!data || !data.name) throw new Error('チャンネルが見つかりません');
           const title = data.name;
           const desc = data.description || '';
-          const thumb = data.avatarUrl || '';
+          const thumb = toYt3Avatar(data.avatarUrl || '', 176); // ← 変換（大サイズ）
           const subs = data.subscriberCount || 0;
           app.innerHTML = `
             <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
