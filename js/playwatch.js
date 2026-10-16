@@ -15,6 +15,35 @@ if (!videoId) {
   loadVideo();
 }
 
+// ==================== モードごとのAPIフィルタ設定 ====================
+// ここにパターンを追加していけば、対象APIを増やせる。
+// 例: "api1-high": ["/.netlify/functions", "/.vercel/api"]
+const API_FILTERS = {
+  "api1-high": [
+    "/.netlify/functions",
+  ],
+};
+
+/**
+ * 指定モードのパターンに一致するAPIだけを返す。
+ * - フィルタ未定義のモード → 全APIをそのまま返す
+ * - 一致するAPIが0件 → 全APIにフォールバック
+ */
+function filterApiList(apiList, mode) {
+  const patterns = API_FILTERS[mode];
+  if (!patterns || patterns.length === 0) {
+    return apiList;
+  }
+  const filtered = apiList.filter(url =>
+    patterns.some(pattern => url.includes(pattern))
+  );
+  if (filtered.length === 0) {
+    console.warn(`モード「${mode}」に一致するAPIが無いため、全APIにフォールバックします`);
+    return apiList;
+  }
+  return filtered;
+}
+
 // ==================== 新しい関数：API.jsonからAPIリストを取得 ====================
 async function getApiList() {
   try {
@@ -28,12 +57,15 @@ async function getApiList() {
 }
 
 // ==================== 最速APIで動画情報を取得（レース） ====================
-async function fetchFastestApi(videoId) {
-  const apiList = await getApiList();
-  
+async function fetchFastestApi(videoId, mode) {
+  let apiList = await getApiList();
+
   if (!Array.isArray(apiList) || apiList.length === 0) {
     throw new Error('APIリストが空です');
   }
+
+  // モードに応じてAPIを絞り込む（0件時は全APIにフォールバック）
+  apiList = filterApiList(apiList, mode);
 
   // 全てのAPIに同時にリクエストを送り、一番早く成功したものを返す
   const requests = apiList.map(baseUrl => {
@@ -63,7 +95,7 @@ async function loadVideo() {
 
     // ── 1. 新API（API.jsonから動的に取得）を使うモード ──
     if (mode === "api1-high" || mode === "api1-prog") {
-      const data = await fetchFastestApi(videoId);
+      const data = await fetchFastestApi(videoId, mode);
 
       if (mode === "api1-high") {
         // 高画質：adaptive video + audio を分離
