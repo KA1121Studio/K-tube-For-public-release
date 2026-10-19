@@ -1,5 +1,5 @@
       const PIPED_API_BASE = '/piped';
-      const INVIDIOUS_API_BASE = '/invidious';
+      const INVIDIOUS_API_BASE = '/invidious'
 
       const MAX_RESULTS = 12;
       const el = id => document.getElementById(id);
@@ -1145,24 +1145,71 @@ if (relatedList) {
             <div class="video-grid" id="channelVideos"></div>
             <div id="channelSentinel" style="height:32px"></div>
           `;
-          const grid = el('channelVideos');
-          let loading = false;
-          const loadMore = async () => {
-            if (loading) return;
-            loading = true;
-            try {
-              const chData = await pipedFetch(`/channel/${channelId}`);
-              for (const v of chData.relatedStreams || chData.videos || []) {
-                const card = await makeVideoCard(v);
-                grid.appendChild(card);
-              }
-            } catch (e) {
-              console.error(e);
-              grid.innerHTML += `<div style="color:#c00">読み込み失敗</div>`;
-            } finally {
-              loading = false;
-            }
-          };
+const grid = el('channelVideos');
+let loading = false;
+const loadMore = async () => {
+  if (loading) return;
+  loading = true;
+  try {
+    let rawVideos = [];
+    let chData = null;
+
+    // ① まず pipedFetch（Piped/Invidious 並列レース）
+    chData = await pipedFetch(`/channel/${channelId}`);
+    rawVideos =
+      chData.relatedStreams ||
+      chData.latestVideos ||
+      chData.videos ||
+      [];
+
+    // ② Piped が勝って relatedStreams が空の場合、Invidious を直接叩く
+    if (rawVideos.length === 0) {
+      console.warn(`[renderChannel] ${channelId} 動画0件 → Invidious 直接取得へ`);
+      try {
+        const invData = await rawFetchJson(`/invidious/channel/${channelId}`, 12000);
+        const normalized = normalizeInvidious(`/channel/${channelId}`, invData);
+        rawVideos =
+          normalized.relatedStreams ||
+          normalized.latestVideos ||
+          normalized.videos ||
+          [];
+        console.log(`[renderChannel] Invidious 直接取得: ${rawVideos.length}件`);
+      } catch (e) {
+        console.warn('[renderChannel] Invidious 直接取得も失敗:', e.message);
+      }
+    }
+
+    // ③ Piped の nextpage トークンで追加取得（両方空だった場合の保険）
+    if (rawVideos.length === 0 && chData?.nextpage) {
+      try {
+        const nextData = await pipedFetch(`/nextpage/channel/${channelId}`, {
+          nextpage: chData.nextpage
+        });
+        rawVideos = nextData.relatedStreams || nextData.videos || [];
+        console.log(`[renderChannel] nextpage 取得: ${rawVideos.length}件`);
+      } catch (e) {
+        console.warn('[renderChannel] nextpage 取得失敗:', e.message);
+      }
+    }
+
+    console.log(`[renderChannel] ${channelId} 最終動画数:`, rawVideos.length);
+
+    if (rawVideos.length === 0) {
+      grid.innerHTML += `<div style="padding:20px;color:#606060;">このチャンネルの動画を取得できませんでした</div>`;
+      return;
+    }
+
+    for (const v of rawVideos) {
+      const card = await makeVideoCard(v);
+      grid.appendChild(card);
+    }
+  } catch (e) {
+    console.error('チャンネル動画取得エラー:', e);
+    grid.innerHTML += `<div style="color:#c00">読み込み失敗: ${escapeHtml(e.message)}</div>`;
+  } finally {
+    loading = false;
+  }
+};
           const sentinel = el('channelSentinel');
           const io = new IntersectionObserver(entries => {
             entries.forEach(ent => { if (ent.isIntersecting) loadMore(); });
