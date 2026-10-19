@@ -696,35 +696,43 @@ for (const backend of backends) {
     rawDesc = rawDesc.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#065fd4; text-decoration:underline;">$1</a>');
     const escapedDesc = rawDesc;
 
-    const chName = metaData.uploader || metaData.author || metaData.channelName || metaData.uploaderName || '不明';
-    let chId = metaData.channelId || metaData.authorId || (metaData.uploaderUrl?.split('/').pop() || '');
-    let chThumb = toYt3Avatar(
+    let chName = metaData.uploader || metaData.author || metaData.channelName || metaData.uploaderName || '不明';
+let chId = metaData.channelId || metaData.authorId || (metaData.uploaderUrl?.split('/').pop() || '');
+
+// 初期値は metaData から（あれば）
+let chThumb = toYt3Avatar(
   metaData.uploaderAvatar || metaData.avatar || '',
   88
 );
 
+let subscriberCount = metaData.subscriberCount ?? 0;
 
-    let subscriberCount = metaData.subscriberCount ?? 0; 
-    if (chId) {
-      try {
-        const channelData = await pipedFetch(`/channel/${chId}`);
-        if (channelData) {
+// chId があれば /channel/ で必ず上書き取得（ホームと同じ経路）
+if (chId) {
+  try {
+    // getChannelThumbPiped はキャッシュも効くので、ホームで取得済みなら即返る
+    const thumb = await getChannelThumbPiped(chId);
+    if (thumb) {
+      chThumb = thumb;
+    }
 
-if (channelData.avatarUrl && !channelData.avatarUrl.includes('/vi/') && !channelData.avatarUrl.includes('thumbnail')) {
-  chThumb = toYt3Avatar(channelData.avatarUrl, 88);
-}
-
-          if (typeof channelData.subscriberCount === 'number' && channelData.subscriberCount > 0) {
-            subscriberCount = channelData.subscriberCount;
-            console.log(`登録者数を /channel から上書き: ${subscriberCount}`);
-          } else if (channelData.subscriberCount === -1 || channelData.subscriberCount === null) {
-            subscriberCount = '非公開';  // 非公開チャンネルの場合
-          }
-        }
-      } catch (err) {
-        console.warn('チャンネル情報取得失敗（登録者数/アイコン）:', err);
+    // 登録者数とチャンネル名も取得
+    const channelData = await pipedFetch(`/channel/${chId}`);
+    if (channelData) {
+      // チャンネル名が不明な場合のみ上書き
+      if (!chName || chName === '不明') {
+        chName = channelData.name || chName;
+      }
+      if (typeof channelData.subscriberCount === 'number' && channelData.subscriberCount > 0) {
+        subscriberCount = channelData.subscriberCount;
+      } else if (channelData.subscriberCount === -1 || channelData.subscriberCount === null) {
+        subscriberCount = '非公開';
       }
     }
+  } catch (err) {
+    console.warn('チャンネル情報取得失敗:', err);
+  }
+}
 
     const chSubs = typeof subscriberCount === 'number' 
       ? fmtNum(subscriberCount) 
