@@ -514,13 +514,11 @@ async function setupComments(videoId) {
      
 if (res.comments && res.comments.length > 0) {
   res.comments.forEach(c => {
-    let thumbUrl = c.thumbnail || '';
-
-    
-  
-    const proxiedThumb = thumbUrl && thumbUrl.includes('proxy.piped.private.coffee')
-      ? `/thumb-proxy?url=${encodeURIComponent(thumbUrl)}`
-      : 'https://www.gstatic.com/youtube/img/no_thumbnail_140-vflXmJqzd.png';
+    const rawThumb = c.thumbnail || '';
+    // yt3.ggpht.com に変換。失敗したら thumb-proxy 経由、それもダメならプレースホルダ
+    const proxiedThumb = toYt3Avatar(rawThumb, 40)
+      || (rawThumb ? `/thumb-proxy?url=${encodeURIComponent(rawThumb)}` : '')
+      || 'https://www.gstatic.com/youtube/img/no_thumbnail_140-vflXmJqzd.png';
 
     const div = document.createElement('div');
     div.className = 'comment';
@@ -529,7 +527,6 @@ if (res.comments && res.comments.length > 0) {
            style="width:40px; height:40px; border-radius:50%; object-fit: cover; flex-shrink:0;"
            loading="lazy"
            referrerpolicy="no-referrer"
-           crossorigin="anonymous"  
            onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png'; this.onerror=null;">
       <div class="c-body">
         <div class="name" style="display:flex; align-items:center; gap:6px; font-size:13px;">
