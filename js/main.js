@@ -1103,21 +1103,78 @@ if (relatedList) {
 }
      
  function normalizeMetadata(data, source) {
+  // パターンB（独自形式）の channel オブジェクトを展開
+  const ch = data.channel || {};
+
+  // viewCount が "29,415,176回視聴" のような文字列の場合、数値に変換
+  function parseViewCount(v) {
+    if (typeof v === 'number') return v;
+    if (typeof v !== 'string') return 0;
+    // "29,415,176回視聴" → 29415176
+    const cleaned = v.replace(/[^\d]/g, '');
+    return cleaned ? parseInt(cleaned, 10) : 0;
+  }
+
+  // likeCount も同様
+  function parseLikeCount(v) {
+    if (typeof v === 'number') return v;
+    if (typeof v !== 'string') return 0;
+    const cleaned = v.replace(/[^\d]/g, '');
+    return cleaned ? parseInt(cleaned, 10) : 0;
+  }
+
+  // published が数値（UNIX秒）か文字列かを判定
+  function parsePublished(v) {
+    if (!v) return '';
+    if (typeof v === 'number') {
+      return new Date(v * 1000).toISOString();
+    }
+    if (typeof v === 'string') {
+      // "2024/10/16" のような形式
+      const d = new Date(v.replace(/\//g, '-'));
+      if (!isNaN(d.getTime())) return d.toISOString();
+      return v;
+    }
+    return '';
+  }
 
   return {
     title: data.title || data.name || '',
     description: data.description || data.desc || data.shortDescription || '',
-    viewCount: data.viewCount || data.views || data.view_count || 0,
-    likeCount: data.likeCount || data.likes || 0,
-    published: data.published || data.uploadDate || data.uploaded || data.released || '',
-    uploader: data.uploader || data.author || data.channelName || '',
-    channelId: data.channelId || data.authorId || '',
-    uploaderAvatar: data.uploaderAvatar || data.avatar || data.authorThumbnails?.[0]?.url || '',
-    thumbnail: data.thumbnail || data.videoThumbnails?.[0]?.url || '',
+    viewCount: parseViewCount(data.viewCount || data.views || data.view_count || 0),
+    likeCount: parseLikeCount(data.likeCount || data.likes || 0),
+    published: parsePublished(data.published || data.uploadDate || data.uploaded || data.dateText || data.released || ''),
+    
+    // パターンA（Invidious形式）とパターンB（独自形式）の両方に対応
+    uploader: data.uploader || data.author || data.channelName || ch.name || '',
+    channelId: data.channelId || data.authorId || ch.id || '',
+    uploaderAvatar: data.uploaderAvatar || data.avatar || data.authorThumbnails?.slice(-1)[0]?.url || ch.avatar || '',
+    
+    thumbnail: data.thumbnail || data.videoThumbnails?.find(t => t.quality === 'maxres')?.url || data.videoThumbnails?.[0]?.url || '',
     lengthSeconds: data.lengthSeconds || data.duration || 0,
-  
+    
+    // 登録者数（パターンBは "チャンネル登録者数 334万人" のような文字列）
+    subscriberCount: (() => {
+      if (typeof data.subscriberCount === 'number') return data.subscriberCount;
+      if (typeof data.subCount === 'number') return data.subCount;
+      const subsStr = data.subs || ch.subs || data.subCountText || '';
+      if (!subsStr) return 0;
+      // "4.55M" → 4550000、"チャンネル登録者数 334万人" → 3340000
+      const m = subsStr.match(/([\d.,]+)\s*([万億MKB]?)/);
+      if (!m) return 0;
+      const num = parseFloat(m[1].replace(/,/g, ''));
+      const unit = m[2];
+      if (unit === '万') return Math.round(num * 10000);
+      if (unit === '億') return Math.round(num * 100000000);
+      if (unit === 'M') return Math.round(num * 1000000);
+      if (unit === 'K') return Math.round(num * 1000);
+      if (unit === 'B') return Math.round(num * 1000000000);
+      return Math.round(num);
+    })(),
+    
     formatStreams: data.formatStreams || data.videoFormats || [],
     adaptiveFormats: data.adaptiveFormats || [],
+    relatedStreams: data.related || data.recommendedVideos || [],
     source
   };
 }
