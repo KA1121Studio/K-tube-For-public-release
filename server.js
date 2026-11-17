@@ -20,6 +20,15 @@ import os from "os";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// cors許可
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
 const execAsync = promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
