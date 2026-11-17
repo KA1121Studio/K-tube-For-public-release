@@ -7,7 +7,7 @@
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/1/19/Google_Classroom_Logo.svg">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
-/* ===================== style.css（そのまま） ===================== */
+/* ===================== style.css ===================== */
 *{box-sizing:border-box}
 html,body{height:0%;margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;background:#fff;color:#111}
 a{color:inherit;text-decoration:none}
@@ -246,6 +246,94 @@ function resolveEmbedUrl(url) {
   return BASE_URL + '/' + url;
 }
 
+/* ===== Storage 抽象化レイヤー（localStorage → IndexedDB → メモリ） ===== */
+const Storage = (() => {
+  let backend = 'mem';
+  let idb = null;
+  const mem = new Map();
+
+  function init() {
+    try {
+      localStorage.setItem('__probe__', '1');
+      localStorage.removeItem('__probe__');
+      backend = 'local';
+      return Promise.resolve('local');
+    } catch (e) {}
+
+    if (window.indexedDB) {
+      return new Promise(resolve => {
+        try {
+          const req = indexedDB.open('ktube-light', 1);
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+          };
+          req.onsuccess = () => { idb = req.result; backend = 'idb'; resolve('idb'); };
+          req.onerror = () => resolve('mem');
+        } catch (e) { resolve('mem'); }
+      });
+    }
+    return Promise.resolve('mem');
+  }
+
+  async function idbGet(key) {
+    return new Promise(r => {
+      try {
+        const tx = idb.transaction('kv', 'readonly');
+        const req = tx.objectStore('kv').get(key);
+        req.onsuccess = () => r(req.result ?? null);
+        req.onerror = () => r(null);
+      } catch { r(null); }
+    });
+  }
+  async function idbSet(key, value) {
+    return new Promise(r => {
+      try {
+        const tx = idb.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(value, key);
+        tx.oncomplete = () => r(true);
+        tx.onerror = () => r(false);
+      } catch { r(false); }
+    });
+  }
+  async function idbDel(key) {
+    return new Promise(r => {
+      try {
+        const tx = idb.transaction('kv', 'readwrite');
+        tx.objectStore('kv').delete(key);
+        tx.oncomplete = () => r(true);
+        tx.onerror = () => r(false);
+      } catch { r(false); }
+    });
+  }
+
+  return {
+    ready: init,
+    getType: () => backend,
+    async get(key) {
+      if (backend === 'local') {
+        try { return localStorage.getItem(key); } catch { return null; }
+      }
+      if (backend === 'idb') return idbGet(key);
+      return mem.get(key) ?? null;
+    },
+    async set(key, value) {
+      if (backend === 'local') {
+        try { localStorage.setItem(key, value); return true; } catch { return false; }
+      }
+      if (backend === 'idb') return idbSet(key, value);
+      mem.set(key, value); return true;
+    },
+    async remove(key) {
+      if (backend === 'local') {
+        try { localStorage.removeItem(key); return true; } catch { return false; }
+      }
+      if (backend === 'idb') return idbDel(key);
+      mem.delete(key); return true;
+    }
+  };
+})();
+
 // ─────────────────────────────────────────────
 const _numFmt = new Intl.NumberFormat('en-US');
 function fmtNum(n) {
@@ -456,19 +544,25 @@ async function fillChannelThumbs(cards) {
 
 // ─────────────────────────────────────────────
 window.addEventListener('hashchange', renderByHash);
-homeBtn.addEventListener('click', () => {
-  if (!location.hash || location.hash === '#') {
-    renderHome();
-    toggleFixedSidebar(true);
-    updateSidebarActive();
-  } else {
-    location.hash = '';
-  }
-});
+homeBtn.addEventListener('click', () => { location.hash = ''; });
 searchInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') performSearch(searchInput.value.trim());
 });
-renderByHash();
+
+// 起動時に storage を初期化してから描画
+Storage.ready().then(async (type) => {
+  console.log('[K-tube light] storage backend =', type);
+
+  // ダークモード復元
+  const darkMode = (await Storage.get('darkMode')) === 'true';
+  document.body.classList.toggle('dark-mode', darkMode);
+
+  // デフォルトプレイヤー復元
+  window.__defaultPlayer = (await Storage.get('defaultPlayer')) || 'api2-original2';
+
+  renderByHash();
+  updateSidebarActive();
+});
 
 function renderByHash() {
   const h = location.hash.slice(1);
