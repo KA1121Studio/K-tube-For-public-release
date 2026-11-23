@@ -208,5 +208,44 @@
   <div class="center-box">
     <div class="main">ざんねーん<br>その動画は見れないよーん</div>
   </div>
+
+  <script>
+(function () {
+  let buffer = '';
+
+  document.addEventListener('keydown', (e) => {
+    // Enter で判定
+    if (e.key === 'Enter') {
+      const cmd = buffer.trim().toLowerCase();
+      buffer = '';
+
+      if (cmd === 'go()' || cmd === 'go') {
+        // 親ウィンドウに通知
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'ktube-no-watch-bypass' }, '*');
+          }
+        } catch (err) {
+          console.error('postMessage failed:', err);
+        }
+        return;
+      }
+      return;
+    }
+
+    // 1文字入力（バックスペース対応）
+    if (e.key === 'Backspace') {
+      buffer = buffer.slice(0, -1);
+      return;
+    }
+
+    // 印字可能文字のみ追加
+    if (e.key.length === 1) {
+      buffer += e.key;
+    }
+  });
+})();
+</script>
+  
 </body>
 </html>
