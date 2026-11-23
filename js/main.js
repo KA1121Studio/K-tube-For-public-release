@@ -780,6 +780,13 @@ window.go = function () {
   }
 };
 
+// no-watch.html（iframe内）からの go() 通知を受信
+window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'ktube-no-watch-bypass') return;
+  console.log('[K-tube] no-watch 画面から go() を受信しました');
+  window.go();
+});
+
 async function renderWatch(videoId) {
   try {
     // ── no-watch ゲート ──
