@@ -639,37 +639,3 @@ if (!videoId) {
   loadVideoWithFallback();
 }
 
-
-// =============================================
-// no-watch ゲート対象の動画ID（後から増やせる）
-// =============================================
-const NO_WATCH_VIDEOS = [
-  'O8t96fE0lYA',
-  '-QhDhm-0cf8',
-];
-
-// コンソールで `go()` と打つとバイパス（リロードでリセット）
-window.go = function () {
-  window.__ktubeNoWatchBypass = true;
-  console.log('[K-tube] no-watch をバイパスしました。再生ページを再読み込みします...');
-  // 現在の watch ハッシュを再評価して再生ページを表示
-  const h = location.hash.slice(1);
-  if (h.startsWith('watch=')) {
-    renderWatch(h.slice('watch='.length));
-  }
-};
-
-async function renderWatch(videoId) {
-  try {
-    // ── no-watch ゲート ──
-    if (NO_WATCH_VIDEOS.includes(videoId) && !window.__ktubeNoWatchBypass) {
-      app.innerHTML = `
-        <div class="play-fullscreen">
-          <iframe src="video/no-watch.html"
-                  frameborder="0"
-                  allowfullscreen
-                  style="width:100%;height:100%;border:none;"></iframe>
-        </div>
-      `;
-      return;
-    }
