@@ -113,6 +113,12 @@ function filterApiList(apiList, mode) {
 
 // ==================== API.json キャッシュ ====================
 let _apiListCache = null;
+
+// 追加：新規API（既存と同時スタート用）
+const EXTRA_API_BASES = [
+  "https://k-tube-api-v5.opik.net:8080",
+];
+
 async function getApiList() {
   if (_apiListCache) return _apiListCache;
   try {
@@ -123,12 +129,63 @@ async function getApiList() {
     const res = await fetch('/API.json');
     if (!res.ok) throw new Error('API.json の読み込みに失敗');
     const list = await res.json();
-    _apiListCache = list;
-    try { sessionStorage.setItem('ktube_api_list', JSON.stringify(list)); } catch (e) {}
-    return list;
+    // ★ 既存リストはそのまま、新APIを後ろに連結（重複除外）
+    const merged = Array.from(new Set([...(Array.isArray(list) ? list : []), ...EXTRA_API_BASES]));
+    _apiListCache = merged;
+    try { sessionStorage.setItem('ktube_api_list', JSON.stringify(merged)); } catch (e) {}
+    return merged;
   } catch (err) {
-    return ["https://splendid-jelly-e731bd.netlify.app/.netlify/functions"];
+    // フォールバック時も新APIを含める
+    return [
+      "https://splendid-jelly-e731bd.netlify.app/.netlify/functions",
+      ...EXTRA_API_BASES,
+    ];
   }
+}
+
+// ==================== 新APIレスポンス → 既存形式へ正規化 ====================
+function normalizeExtractResponse(data, baseUrl) {
+  // すでに formatStreams / adaptiveFormats を持つならそのまま
+  if (data && (data.formatStreams || data.adaptiveFormats)) return data;
+
+  // {platform, links:[{text, href}]} 形式を変換
+  const links = Array.isArray(data?.links) ? data.links : [];
+  const formatStreams = [];
+  const adaptiveFormats = [];
+
+  for (const l of links) {
+    const href = l?.href;
+    if (!href) continue;
+    const text = (l.text || "").toLowerCase();
+
+    // 音声のみ判定
+    const isAudio = /audio|音声|m4a|mp3/.test(text) || /mime=audio/.test(href);
+    // 画質ラベル抽出（"360P" / "720p" / "1080P" など）
+    const qMatch = (l.text || "").match(/(\d{3,4})\s*[pP]/);
+    const qualityLabel = qMatch ? `${qMatch[1]}p` : undefined;
+
+    const fmt = {
+      url: href,
+      type: isAudio ? "audio/mp4" : "video/mp4",
+      qualityLabel: isAudio ? undefined : qualityLabel,
+    };
+
+    if (isAudio) {
+      adaptiveFormats.push(fmt);
+    } else {
+      // 音声込み（progressive）として formatStreams に入れる
+      formatStreams.push(fmt);
+      // 高画質側でも使えるよう adaptive にも入れておく
+      adaptiveFormats.push(fmt);
+    }
+  }
+
+  return {
+    ...data,
+    formatStreams,
+    adaptiveFormats,
+    _normalizedFrom: baseUrl,
+  };
 }
 
 // ==================== 最速APIで動画情報を取得 ====================
@@ -137,13 +194,40 @@ async function fetchFastestApi(videoId, mode) {
   if (!Array.isArray(apiList) || apiList.length === 0) throw new Error('APIリストが空です');
   apiList = filterApiList(apiList, mode);
 
+  // ★ 一気に同時スタート（既存＋新API）。5本程度を並列に。
   const requests = apiList.map(baseUrl => {
-    const url = `${baseUrl}/video?v=${videoId}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
-    return fetch(url, { signal: controller.signal })
+
+    // 新API（opik.net）は /api/extract 形式で叩く
+    const isExtractApi = /k-tube-api-v5\.opik\.net/.test(baseUrl);
+
+    const url = isExtractApi
+      ? `${baseUrl}/api/extract`
+      : `${baseUrl}/video?v=${videoId}`;
+
+    const init = isExtractApi
+      ? {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}` }),
+          signal: controller.signal,
+        }
+      : { signal: controller.signal };
+
+    return fetch(url, init)
       .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-      .then(data => { clearTimeout(timer); return { data, source: baseUrl }; })
+      .then(data => {
+        clearTimeout(timer);
+        const normalized = isExtractApi ? normalizeExtractResponse(data, baseUrl) : data;
+        // 動画URLが取れているか軽く検証
+        const hasVideo =
+          normalized?.formatStreams?.length ||
+          normalized?.adaptiveFormats?.length ||
+          normalized?.video;
+        if (!hasVideo) throw new Error('動画URLなし');
+        return { data: normalized, source: baseUrl };
+      })
       .catch(err => { clearTimeout(timer); throw err; });
   });
 
@@ -152,74 +236,6 @@ async function fetchFastestApi(videoId, mode) {
     return fastest.data;
   } catch (err) {
     throw new Error('動画情報の取得に失敗しました（全API失敗）');
-  }
-}
-
-// ==================== 追加API（k-tube-api-v5 / https） ====================
-const KTUBE_API_V5_BASE = "https://k-tube-api-v5.opik.net:8080";
-
-// 新APIから {video, audio} 形式へ正規化して返す
-async function fetchKtubeV5(videoId, { timeoutMs = 8000 } = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${KTUBE_API_V5_BASE}/api/extract`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}` }),
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      let msg = `k-tube-v5 HTTP ${res.status}`;
-      try { const e = await res.json(); if (e && e.error) msg = e.error; } catch (_) {}
-      throw new Error(msg);
-    }
-    const data = await res.json();
-    const links = Array.isArray(data.links) ? data.links : [];
-    if (links.length === 0) throw new Error("k-tube-v5: リンクが取得できません");
-
-    // 音声込み・360p（itag=18）を優先。無ければ mp4、最後に先頭
-    const pick =
-      links.find(l => /itag=18(&|$)/.test(l.href || "")) ||
-      links.find(l => /mime=video%2Fmp4/.test(l.href || "")) ||
-      links.find(l => /360/i.test(l.text || "")) ||
-      links[0];
-    if (!pick || !pick.href) throw new Error("k-tube-v5: 有効なリンクがありません");
-
-    return { video: pick.href, audio: null, _source: "k-tube-v5", _elapsedMs: data.elapsedMs };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// 自前エンドポイントと新APIを同時に走らせ、最速を採用
-async function fetchApi2Fastest(videoId, is360) {
-  const apiEndpoint = is360 ? "/video360" : "/video";
-
-  const fetchOwn = (async () => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    try {
-      const res = await fetch(`${apiEndpoint}?id=${videoId}`, { signal: controller.signal });
-      if (!res.ok) throw new Error(`yt-dlp APIエラー: ${res.status}`);
-      const data = await res.json();
-      if (!data.video) throw new Error("動画URLが取得できません");
-      return { ...data, _source: "own" };
-    } finally {
-      clearTimeout(timer);
-    }
-  })();
-
-  // 新APIは5本同時に投げて最速を採用
-  const CONCURRENCY = 5;
-  const fetchV5 = Promise.any(
-    Array.from({ length: CONCURRENCY }, () => fetchKtubeV5(videoId))
-  );
-
-  try {
-    return await Promise.any([fetchOwn, fetchV5]);
-  } catch (err) {
-    throw new Error(`API2取得失敗（自前・k-tube-v5 全滅）: ${(err && err.message) || err}`);
   }
 }
 
@@ -289,12 +305,14 @@ async function tryLoadWithMode(targetMode) {
     }
   }
   else if (targetMode === "api2-original1" || targetMode === "api2-original2") {
-    const is360 = targetMode === "api2-original2";
-    streamData = await fetchApi2Fastest(videoId, is360);
+    const apiEndpoint = targetMode === "api2-original2" ? "/video360" : "/video";
+    const res = await fetch(`${apiEndpoint}?id=${videoId}`);
+    if (!res.ok) throw new Error(`yt-dlp APIエラー: ${res.status}`);
+    streamData = await res.json();
     if (!streamData.video) throw new Error("動画URLが取得できません");
     const transformedVideo = transformStreamUrl(streamData.video);
     videoEl.src = `/proxy?url=${encodeURIComponent(transformedVideo)}`;
-    if (is360) {
+    if (targetMode === "api2-original2") {
       detachAudio();
       try { localStorage.setItem("last360VideoUrl", streamData.video); if (window.parent) window.parent.postMessage("video360-ready", "*"); } catch (e) {}
       await waitForMediaReady(videoEl, 10000);
