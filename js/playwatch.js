@@ -155,6 +155,74 @@ async function fetchFastestApi(videoId, mode) {
   }
 }
 
+// ==================== 追加API（k-tube-api-v5 / https） ====================
+const KTUBE_API_V5_BASE = "https://k-tube-api-v5.opik.net:8080";
+
+// 新APIから {video, audio} 形式へ正規化して返す
+async function fetchKtubeV5(videoId, { timeoutMs = 8000 } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${KTUBE_API_V5_BASE}/api/extract`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: `https://www.youtube.com/watch?v=${videoId}` }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      let msg = `k-tube-v5 HTTP ${res.status}`;
+      try { const e = await res.json(); if (e && e.error) msg = e.error; } catch (_) {}
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    const links = Array.isArray(data.links) ? data.links : [];
+    if (links.length === 0) throw new Error("k-tube-v5: リンクが取得できません");
+
+    // 音声込み・360p（itag=18）を優先。無ければ mp4、最後に先頭
+    const pick =
+      links.find(l => /itag=18(&|$)/.test(l.href || "")) ||
+      links.find(l => /mime=video%2Fmp4/.test(l.href || "")) ||
+      links.find(l => /360/i.test(l.text || "")) ||
+      links[0];
+    if (!pick || !pick.href) throw new Error("k-tube-v5: 有効なリンクがありません");
+
+    return { video: pick.href, audio: null, _source: "k-tube-v5", _elapsedMs: data.elapsedMs };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// 自前エンドポイントと新APIを同時に走らせ、最速を採用
+async function fetchApi2Fastest(videoId, is360) {
+  const apiEndpoint = is360 ? "/video360" : "/video";
+
+  const fetchOwn = (async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(`${apiEndpoint}?id=${videoId}`, { signal: controller.signal });
+      if (!res.ok) throw new Error(`yt-dlp APIエラー: ${res.status}`);
+      const data = await res.json();
+      if (!data.video) throw new Error("動画URLが取得できません");
+      return { ...data, _source: "own" };
+    } finally {
+      clearTimeout(timer);
+    }
+  })();
+
+  // 新APIは5本同時に投げて最速を採用
+  const CONCURRENCY = 5;
+  const fetchV5 = Promise.any(
+    Array.from({ length: CONCURRENCY }, () => fetchKtubeV5(videoId))
+  );
+
+  try {
+    return await Promise.any([fetchOwn, fetchV5]);
+  } catch (err) {
+    throw new Error(`API2取得失敗（自前・k-tube-v5 全滅）: ${(err && err.message) || err}`);
+  }
+}
+
 // ==================== 音声着脱 ====================
 function detachAudio() {
   if (!audioEl) return;
@@ -221,14 +289,12 @@ async function tryLoadWithMode(targetMode) {
     }
   }
   else if (targetMode === "api2-original1" || targetMode === "api2-original2") {
-    const apiEndpoint = targetMode === "api2-original2" ? "/video360" : "/video";
-    const res = await fetch(`${apiEndpoint}?id=${videoId}`);
-    if (!res.ok) throw new Error(`yt-dlp APIエラー: ${res.status}`);
-    streamData = await res.json();
+    const is360 = targetMode === "api2-original2";
+    streamData = await fetchApi2Fastest(videoId, is360);
     if (!streamData.video) throw new Error("動画URLが取得できません");
     const transformedVideo = transformStreamUrl(streamData.video);
     videoEl.src = `/proxy?url=${encodeURIComponent(transformedVideo)}`;
-    if (targetMode === "api2-original2") {
+    if (is360) {
       detachAudio();
       try { localStorage.setItem("last360VideoUrl", streamData.video); if (window.parent) window.parent.postMessage("video360-ready", "*"); } catch (e) {}
       await waitForMediaReady(videoEl, 10000);
@@ -638,4 +704,3 @@ if (!videoId) {
 } else {
   loadVideoWithFallback();
 }
-
